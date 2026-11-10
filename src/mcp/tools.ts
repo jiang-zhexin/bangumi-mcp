@@ -432,9 +432,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.pipe(
               v.picklist([0, 1, 2, 3, 4, 5, 6]),
               v.description(
-                "本篇 = 0\n特别篇 = 1\nOP = 2\nED = 3\n预告/宣传/广告 = 4\nMAD = 5\n其他 = 6",
+                "参照章节的`type`\n- `0`: 本篇\n- `1`: 特别篇\n- `2`: OP\n- `3`: ED\n- `4`: 预告/宣传/广告\n- `5`: MAD\n- `6`: 其他",
               ),
-              v.description("参照章节的`type`"),
             ),
           ),
           limit: v.optional(
@@ -843,9 +842,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           type: v.optional(
             v.pipe(
               v.picklist([1, 2, 3, 4, 5]),
-              v.description("- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃"),
               v.description(
-                "收藏类型，默认为全部\n\n具体含义见 [CollectionType](#model-CollectionType)",
+                "收藏类型，默认为全部\n- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
               ),
             ),
           ),
@@ -916,9 +914,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                   v.pipe(
                     v.picklist([1, 2, 3, 4, 5]),
                     v.description(
-                      "- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
+                      "修改条目收藏类型\n- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
                     ),
-                    v.description("修改条目收藏类型"),
                   ),
                 ),
                 rate: v.optional(
@@ -992,9 +989,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                   v.pipe(
                     v.picklist([1, 2, 3, 4, 5]),
                     v.description(
-                      "- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
+                      "修改条目收藏类型\n- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
                     ),
-                    v.description("修改条目收藏类型"),
                   ),
                 ),
                 rate: v.optional(
