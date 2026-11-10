@@ -68,6 +68,77 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "每日放送",
       description: "获取每周每日放送的番剧时间表",
       annotations: { readOnlyHint: true, openWorldHint: true },
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              weekday: v.optional(
+                v.object({
+                  en: v.optional(v.string()),
+                  cn: v.optional(v.string()),
+                  ja: v.optional(v.string()),
+                  id: v.optional(v.number()),
+                }),
+              ),
+              items: v.optional(
+                v.array(
+                  v.object({
+                    id: v.optional(v.number()),
+                    url: v.optional(v.string()),
+                    type: v.optional(v.picklist([1, 2, 3, 4, 6])),
+                    name: v.optional(v.string()),
+                    name_cn: v.optional(v.string()),
+                    summary: v.optional(v.string()),
+                    air_date: v.optional(v.string()),
+                    air_weekday: v.optional(v.number()),
+                    images: v.optional(
+                      v.object({
+                        large: v.optional(v.string()),
+                        common: v.optional(v.string()),
+                        medium: v.optional(v.string()),
+                        small: v.optional(v.string()),
+                        grid: v.optional(v.string()),
+                      }),
+                    ),
+                    eps: v.optional(v.number()),
+                    eps_count: v.optional(v.number()),
+                    rating: v.optional(
+                      v.object({
+                        total: v.optional(v.number()),
+                        score: v.optional(v.number()),
+                        count: v.optional(
+                          v.object({
+                            "1": v.optional(v.number()),
+                            "2": v.optional(v.number()),
+                            "3": v.optional(v.number()),
+                            "4": v.optional(v.number()),
+                            "5": v.optional(v.number()),
+                            "6": v.optional(v.number()),
+                            "7": v.optional(v.number()),
+                            "8": v.optional(v.number()),
+                            "9": v.optional(v.number()),
+                            "10": v.optional(v.number()),
+                          }),
+                        ),
+                      }),
+                    ),
+                    rank: v.optional(v.number()),
+                    collection: v.optional(
+                      v.object({
+                        wish: v.optional(v.number()),
+                        collect: v.optional(v.number()),
+                        doing: v.optional(v.number()),
+                        on_hold: v.optional(v.number()),
+                        dropped: v.optional(v.number()),
+                      }),
+                    ),
+                  }),
+                ),
+              ),
+            }),
+          ),
+        }),
+      ),
     },
     () => client.api.GET("/calendar").then(toJsonResult),
   );
@@ -165,6 +236,76 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.picklist([1, 2, 3, 4, 6]),
+              name: v.string(),
+              name_cn: v.string(),
+              summary: v.string(),
+              series: v.boolean(),
+              nsfw: v.boolean(),
+              locked: v.boolean(),
+              date: v.optional(v.string()),
+              platform: v.string(),
+              images: v.object({
+                large: v.string(),
+                common: v.string(),
+                medium: v.string(),
+                small: v.string(),
+                grid: v.string(),
+              }),
+              infobox: v.optional(
+                v.array(
+                  v.object({
+                    key: v.string(),
+                    value: v.union([
+                      v.string(),
+                      v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
+                    ]),
+                  }),
+                ),
+              ),
+              volumes: v.number(),
+              eps: v.number(),
+              total_episodes: v.number(),
+              rating: v.object({
+                rank: v.number(),
+                total: v.number(),
+                score: v.number(),
+                count: v.object({
+                  "1": v.optional(v.number()),
+                  "2": v.optional(v.number()),
+                  "3": v.optional(v.number()),
+                  "4": v.optional(v.number()),
+                  "5": v.optional(v.number()),
+                  "6": v.optional(v.number()),
+                  "7": v.optional(v.number()),
+                  "8": v.optional(v.number()),
+                  "9": v.optional(v.number()),
+                  "10": v.optional(v.number()),
+                }),
+              }),
+              collection: v.object({
+                wish: v.number(),
+                collect: v.number(),
+                doing: v.number(),
+                on_hold: v.number(),
+                dropped: v.number(),
+              }),
+              meta_tags: v.array(v.string()),
+              tags: v.array(
+                v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
+              ),
+            }),
+          ),
+        }),
+      ),
     },
     ({ limit, offset, keyword, sort, filter }) =>
       client.api
@@ -203,6 +344,37 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3, 4]),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              summary: v.string(),
+              locked: v.boolean(),
+              infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
+              gender: v.optional(v.string()),
+              blood_type: v.optional(v.picklist([1, 2, 3, 4])),
+              birth_year: v.optional(v.number()),
+              birth_mon: v.optional(v.number()),
+              birth_day: v.optional(v.number()),
+              stat: v.object({ comments: v.number(), collects: v.number() }),
+            }),
+          ),
+        }),
+      ),
     },
     ({ limit, offset, keyword, filter }) =>
       client.api
@@ -233,6 +405,41 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               }),
               v.description("过滤条件，不同字段之间为「且」关系"),
             ),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3]),
+              career: v.array(
+                v.picklist([
+                  "producer",
+                  "mangaka",
+                  "artist",
+                  "seiyu",
+                  "writer",
+                  "illustrator",
+                  "actor",
+                ]),
+              ),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              short_summary: v.string(),
+              locked: v.boolean(),
+            }),
           ),
         }),
       ),
@@ -306,6 +513,76 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.picklist([1, 2, 3, 4, 6]),
+              name: v.string(),
+              name_cn: v.string(),
+              summary: v.string(),
+              series: v.boolean(),
+              nsfw: v.boolean(),
+              locked: v.boolean(),
+              date: v.optional(v.string()),
+              platform: v.string(),
+              images: v.object({
+                large: v.string(),
+                common: v.string(),
+                medium: v.string(),
+                small: v.string(),
+                grid: v.string(),
+              }),
+              infobox: v.optional(
+                v.array(
+                  v.object({
+                    key: v.string(),
+                    value: v.union([
+                      v.string(),
+                      v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
+                    ]),
+                  }),
+                ),
+              ),
+              volumes: v.number(),
+              eps: v.number(),
+              total_episodes: v.number(),
+              rating: v.object({
+                rank: v.number(),
+                total: v.number(),
+                score: v.number(),
+                count: v.object({
+                  "1": v.optional(v.number()),
+                  "2": v.optional(v.number()),
+                  "3": v.optional(v.number()),
+                  "4": v.optional(v.number()),
+                  "5": v.optional(v.number()),
+                  "6": v.optional(v.number()),
+                  "7": v.optional(v.number()),
+                  "8": v.optional(v.number()),
+                  "9": v.optional(v.number()),
+                  "10": v.optional(v.number()),
+                }),
+              }),
+              collection: v.object({
+                wish: v.number(),
+                collect: v.number(),
+                doing: v.number(),
+                on_hold: v.number(),
+                dropped: v.number(),
+              }),
+              meta_tags: v.array(v.string()),
+              tags: v.array(
+                v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
+              ),
+            }),
+          ),
+        }),
+      ),
     },
     ({ type, cat, series, platform, sort, year, month, limit, offset }) =>
       client.api
@@ -326,6 +603,67 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          type: v.picklist([1, 2, 3, 4, 6]),
+          name: v.string(),
+          name_cn: v.string(),
+          summary: v.string(),
+          series: v.boolean(),
+          nsfw: v.boolean(),
+          locked: v.boolean(),
+          date: v.optional(v.string()),
+          platform: v.string(),
+          images: v.object({
+            large: v.string(),
+            common: v.string(),
+            medium: v.string(),
+            small: v.string(),
+            grid: v.string(),
+          }),
+          infobox: v.optional(
+            v.array(
+              v.object({
+                key: v.string(),
+                value: v.union([
+                  v.string(),
+                  v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
+                ]),
+              }),
+            ),
+          ),
+          volumes: v.number(),
+          eps: v.number(),
+          total_episodes: v.number(),
+          rating: v.object({
+            rank: v.number(),
+            total: v.number(),
+            score: v.number(),
+            count: v.object({
+              "1": v.optional(v.number()),
+              "2": v.optional(v.number()),
+              "3": v.optional(v.number()),
+              "4": v.optional(v.number()),
+              "5": v.optional(v.number()),
+              "6": v.optional(v.number()),
+              "7": v.optional(v.number()),
+              "8": v.optional(v.number()),
+              "9": v.optional(v.number()),
+              "10": v.optional(v.number()),
+            }),
+          }),
+          collection: v.object({
+            wish: v.number(),
+            collect: v.number(),
+            doing: v.number(),
+            on_hold: v.number(),
+            dropped: v.number(),
+          }),
+          meta_tags: v.array(v.string()),
+          tags: v.array(v.object({ name: v.string(), count: v.number(), total_count: v.number() })),
         }),
       ),
     },
@@ -350,6 +688,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
+      ),
     },
     ({ subject_id, type }) =>
       client.api
@@ -369,6 +710,38 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3]),
+              career: v.array(
+                v.picklist([
+                  "producer",
+                  "mangaka",
+                  "artist",
+                  "seiyu",
+                  "writer",
+                  "illustrator",
+                  "actor",
+                ]),
+              ),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              relation: v.string(),
+              eps: v.string(),
+            }),
+          ),
         }),
       ),
     },
@@ -391,6 +764,55 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              summary: v.string(),
+              type: v.picklist([1, 2, 3, 4]),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              relation: v.string(),
+              actors: v.array(
+                v.object({
+                  id: v.number(),
+                  name: v.string(),
+                  type: v.picklist([1, 2, 3]),
+                  career: v.array(
+                    v.picklist([
+                      "producer",
+                      "mangaka",
+                      "artist",
+                      "seiyu",
+                      "writer",
+                      "illustrator",
+                      "actor",
+                    ]),
+                  ),
+                  images: v.optional(
+                    v.object({
+                      large: v.string(),
+                      medium: v.string(),
+                      small: v.string(),
+                      grid: v.string(),
+                    }),
+                  ),
+                  short_summary: v.string(),
+                  locked: v.boolean(),
+                }),
+              ),
+            }),
+          ),
+        }),
+      ),
     },
     ({ subject_id }) =>
       client.api
@@ -409,6 +831,28 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.number(),
+              name: v.string(),
+              name_cn: v.string(),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  common: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              relation: v.string(),
+            }),
+          ),
         }),
       ),
     },
@@ -451,6 +895,29 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.number(),
+              name: v.string(),
+              name_cn: v.string(),
+              sort: v.number(),
+              ep: v.optional(v.number()),
+              airdate: v.string(),
+              comment: v.number(),
+              duration: v.string(),
+              desc: v.string(),
+              disc: v.number(),
+              duration_seconds: v.optional(v.number()),
+            }),
+          ),
+        }),
+      ),
     },
     ({ subject_id, type, limit, offset }) =>
       client.api
@@ -469,6 +936,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          type: v.picklist([0, 1, 2, 3, 4, 5, 6]),
+          name: v.string(),
+          name_cn: v.string(),
+          sort: v.number(),
+          ep: v.optional(v.number()),
+          airdate: v.string(),
+          comment: v.number(),
+          duration: v.string(),
+          desc: v.string(),
+          disc: v.number(),
+          subject_id: v.number(),
         }),
       ),
     },
@@ -492,6 +975,30 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.minValue(1),
             v.description("角色 ID"),
           ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          name: v.string(),
+          type: v.picklist([1, 2, 3, 4]),
+          images: v.optional(
+            v.object({
+              large: v.string(),
+              medium: v.string(),
+              small: v.string(),
+              grid: v.string(),
+            }),
+          ),
+          summary: v.string(),
+          locked: v.boolean(),
+          infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
+          gender: v.optional(v.string()),
+          blood_type: v.optional(v.picklist([1, 2, 3, 4])),
+          birth_year: v.optional(v.number()),
+          birth_mon: v.optional(v.number()),
+          birth_day: v.optional(v.number()),
+          stat: v.object({ comments: v.number(), collects: v.number() }),
         }),
       ),
     },
@@ -520,6 +1027,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           type: v.pipe(v.string(), v.description("图片尺寸：`small`、`grid`、`large`、`medium`")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
+      ),
     },
     ({ character_id, type }) =>
       client.api
@@ -546,6 +1056,21 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.picklist([1, 2, 3, 4, 6]),
+              staff: v.string(),
+              eps: v.string(),
+              name: v.string(),
+              name_cn: v.string(),
+              image: v.optional(v.string()),
+            }),
+          ),
+        }),
+      ),
     },
     ({ character_id }) =>
       client.api
@@ -568,6 +1093,30 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.safeInteger(),
             v.minValue(1),
             v.description("角色 ID"),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3, 4]),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              subject_id: v.number(),
+              subject_type: v.picklist([1, 2, 3, 4, 6]),
+              subject_name: v.string(),
+              subject_name_cn: v.string(),
+              staff: v.optional(v.string()),
+            }),
           ),
         }),
       ),
@@ -601,6 +1150,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ character_id }) =>
       client.api
@@ -631,6 +1181,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ character_id }) =>
       client.api
@@ -651,6 +1202,42 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          name: v.string(),
+          type: v.picklist([1, 2, 3]),
+          career: v.array(
+            v.picklist([
+              "producer",
+              "mangaka",
+              "artist",
+              "seiyu",
+              "writer",
+              "illustrator",
+              "actor",
+            ]),
+          ),
+          images: v.optional(
+            v.object({
+              large: v.string(),
+              medium: v.string(),
+              small: v.string(),
+              grid: v.string(),
+            }),
+          ),
+          summary: v.string(),
+          locked: v.boolean(),
+          last_modified: v.string(),
+          infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
+          gender: v.optional(v.string()),
+          blood_type: v.optional(v.picklist([1, 2, 3, 4])),
+          birth_year: v.optional(v.number()),
+          birth_mon: v.optional(v.number()),
+          birth_day: v.optional(v.number()),
+          stat: v.object({ comments: v.number(), collects: v.number() }),
+        }),
+      ),
     },
     ({ person_id }) =>
       client.api
@@ -669,6 +1256,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
           type: v.pipe(v.string(), v.description("图片尺寸：`small`、`grid`、`large`、`medium`")),
         }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
       ),
     },
     ({ person_id, type }) =>
@@ -691,6 +1281,21 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.picklist([1, 2, 3, 4, 6]),
+              staff: v.string(),
+              eps: v.string(),
+              name: v.string(),
+              name_cn: v.string(),
+              image: v.optional(v.string()),
+            }),
+          ),
+        }),
+      ),
     },
     ({ person_id }) =>
       client.api
@@ -709,6 +1314,30 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3, 4]),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              subject_id: v.number(),
+              subject_type: v.picklist([1, 2, 3, 4, 6]),
+              subject_name: v.string(),
+              subject_name_cn: v.string(),
+              staff: v.optional(v.string()),
+            }),
+          ),
         }),
       ),
     },
@@ -736,6 +1365,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ person_id }) =>
       client.api
@@ -761,6 +1391,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ person_id }) =>
       client.api
@@ -784,6 +1415,16 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          username: v.string(),
+          nickname: v.string(),
+          user_group: v.picklist([1, 2, 3, 4, 5, 8, 9, 10, 11]),
+          avatar: v.object({ large: v.string(), medium: v.string(), small: v.string() }),
+          sign: v.string(),
+        }),
+      ),
     },
     ({ username }) =>
       client.api.GET("/v0/users/{username}", { params: { path: { username } } }).then(toJsonResult),
@@ -804,6 +1445,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           type: v.pipe(v.string(), v.description("头像尺寸：`small`、`large`、`medium`")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
+      ),
     },
     ({ username, type }) =>
       client.api
@@ -820,6 +1464,19 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取当前登录用户信息",
       description: "获取当前授权登录用户的个人信息（包括 username、UID、昵称等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          username: v.string(),
+          nickname: v.string(),
+          user_group: v.picklist([1, 2, 3, 4, 5, 8, 9, 10, 11]),
+          avatar: v.object({ large: v.string(), medium: v.string(), small: v.string() }),
+          sign: v.string(),
+          email: v.optional(v.string()),
+          reg_time: v.optional(v.string()),
+          time_offset: v.optional(v.number()),
+        }),
+      ),
     },
     () => client.api.GET("/v0/me").then(toJsonResult),
   );
@@ -862,6 +1519,52 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              subject_id: v.number(),
+              subject_type: v.picklist([1, 2, 3, 4, 6]),
+              rate: v.number(),
+              type: v.picklist([1, 2, 3, 4, 5]),
+              comment: v.optional(v.string()),
+              tags: v.array(v.string()),
+              ep_status: v.number(),
+              vol_status: v.number(),
+              updated_at: v.string(),
+              private: v.boolean(),
+              subject: v.optional(
+                v.object({
+                  id: v.number(),
+                  type: v.picklist([1, 2, 3, 4, 6]),
+                  name: v.string(),
+                  name_cn: v.string(),
+                  short_summary: v.string(),
+                  date: v.optional(v.string()),
+                  images: v.object({
+                    large: v.string(),
+                    common: v.string(),
+                    medium: v.string(),
+                    small: v.string(),
+                    grid: v.string(),
+                  }),
+                  volumes: v.number(),
+                  eps: v.number(),
+                  collection_total: v.number(),
+                  score: v.number(),
+                  rank: v.number(),
+                  tags: v.array(
+                    v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
+                  ),
+                }),
+              ),
+            }),
+          ),
+        }),
+      ),
     },
     ({ username, subject_type, type, limit, offset }) =>
       client.api
@@ -884,6 +1587,45 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
           ),
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          subject_id: v.number(),
+          subject_type: v.picklist([1, 2, 3, 4, 6]),
+          rate: v.number(),
+          type: v.picklist([1, 2, 3, 4, 5]),
+          comment: v.optional(v.string()),
+          tags: v.array(v.string()),
+          ep_status: v.number(),
+          vol_status: v.number(),
+          updated_at: v.string(),
+          private: v.boolean(),
+          subject: v.optional(
+            v.object({
+              id: v.number(),
+              type: v.picklist([1, 2, 3, 4, 6]),
+              name: v.string(),
+              name_cn: v.string(),
+              short_summary: v.string(),
+              date: v.optional(v.string()),
+              images: v.object({
+                large: v.string(),
+                common: v.string(),
+                medium: v.string(),
+                small: v.string(),
+                grid: v.string(),
+              }),
+              volumes: v.number(),
+              eps: v.number(),
+              collection_total: v.number(),
+              score: v.number(),
+              rank: v.number(),
+              tags: v.array(
+                v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
+              ),
+            }),
+          ),
         }),
       ),
     },
@@ -951,6 +1693,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ subject_id, ...body }) =>
       client.api
@@ -1017,6 +1760,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ subject_id, ...body }) =>
       client.api
@@ -1058,6 +1802,35 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.optional(
+            v.array(
+              v.object({
+                episode: v.object({
+                  id: v.number(),
+                  type: v.number(),
+                  name: v.string(),
+                  name_cn: v.string(),
+                  sort: v.number(),
+                  ep: v.optional(v.number()),
+                  airdate: v.string(),
+                  comment: v.number(),
+                  duration: v.string(),
+                  desc: v.string(),
+                  disc: v.number(),
+                  duration_seconds: v.optional(v.number()),
+                }),
+                type: v.picklist([0, 1, 2, 3]),
+                updated_at: v.number(),
+              }),
+            ),
+          ),
+        }),
+      ),
     },
     ({ subject_id, offset, limit, episode_type }) =>
       client.api
@@ -1092,6 +1865,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ subject_id, episode_id, type }) =>
       client.api
@@ -1111,6 +1885,26 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          episode: v.object({
+            id: v.number(),
+            type: v.number(),
+            name: v.string(),
+            name_cn: v.string(),
+            sort: v.number(),
+            ep: v.optional(v.number()),
+            airdate: v.string(),
+            comment: v.number(),
+            duration: v.string(),
+            desc: v.string(),
+            disc: v.number(),
+            duration_seconds: v.optional(v.number()),
+          }),
+          type: v.picklist([0, 1, 2, 3]),
+          updated_at: v.number(),
         }),
       ),
     },
@@ -1142,6 +1936,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ episode_id, type }) =>
       client.api
@@ -1163,6 +1958,29 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           username: v.pipe(
             v.string(),
             v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3, 4]),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              created_at: v.string(),
+            }),
           ),
         }),
       ),
@@ -1195,6 +2013,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          name: v.string(),
+          type: v.picklist([1, 2, 3, 4]),
+          images: v.optional(
+            v.object({
+              large: v.string(),
+              medium: v.string(),
+              small: v.string(),
+              grid: v.string(),
+            }),
+          ),
+          created_at: v.string(),
+        }),
+      ),
     },
     ({ username, character_id }) =>
       client.api
@@ -1215,6 +2049,40 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           username: v.pipe(
             v.string(),
             v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              name: v.string(),
+              type: v.picklist([1, 2, 3]),
+              career: v.array(
+                v.picklist([
+                  "producer",
+                  "mangaka",
+                  "artist",
+                  "seiyu",
+                  "writer",
+                  "illustrator",
+                  "actor",
+                ]),
+              ),
+              images: v.optional(
+                v.object({
+                  large: v.string(),
+                  medium: v.string(),
+                  small: v.string(),
+                  grid: v.string(),
+                }),
+              ),
+              created_at: v.string(),
+            }),
           ),
         }),
       ),
@@ -1240,6 +2108,33 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
           ),
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          name: v.string(),
+          type: v.picklist([1, 2, 3]),
+          career: v.array(
+            v.picklist([
+              "producer",
+              "mangaka",
+              "artist",
+              "seiyu",
+              "writer",
+              "illustrator",
+              "actor",
+            ]),
+          ),
+          images: v.optional(
+            v.object({
+              large: v.string(),
+              medium: v.string(),
+              small: v.string(),
+              grid: v.string(),
+            }),
+          ),
+          created_at: v.string(),
         }),
       ),
     },
@@ -1274,6 +2169,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.number(),
+              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+              summary: v.string(),
+              created_at: v.string(),
+            }),
+          ),
+        }),
+      ),
     },
     ({ person_id, limit, offset }) =>
       client.api
@@ -1296,6 +2207,35 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.safeInteger(),
             v.minValue(1),
             v.description("历史修订版本 ID"),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          type: v.number(),
+          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+          summary: v.string(),
+          created_at: v.string(),
+          data: v.optional(
+            v.record(
+              v.string(),
+              v.object({
+                prsn_infobox: v.string(),
+                prsn_summary: v.string(),
+                prsn_name: v.string(),
+                profession: v.object({
+                  producer: v.optional(v.string()),
+                  mangaka: v.optional(v.string()),
+                  artist: v.optional(v.string()),
+                  seiyu: v.optional(v.string()),
+                  writer: v.optional(v.string()),
+                  illustrator: v.optional(v.string()),
+                  actor: v.optional(v.string()),
+                }),
+                extra: v.object({ img: v.optional(v.string()) }),
+              }),
+            ),
           ),
         }),
       ),
@@ -1336,6 +2276,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.number(),
+              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+              summary: v.string(),
+              created_at: v.string(),
+            }),
+          ),
+        }),
+      ),
     },
     ({ character_id, limit, offset }) =>
       client.api
@@ -1358,6 +2314,26 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.safeInteger(),
             v.minValue(1),
             v.description("历史修订版本 ID"),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          type: v.number(),
+          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+          summary: v.string(),
+          created_at: v.string(),
+          data: v.optional(
+            v.record(
+              v.string(),
+              v.object({
+                infobox: v.string(),
+                summary: v.string(),
+                name: v.string(),
+                extra: v.object({ img: v.optional(v.string()) }),
+              }),
+            ),
           ),
         }),
       ),
@@ -1393,6 +2369,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.number(),
+              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+              summary: v.string(),
+              created_at: v.string(),
+            }),
+          ),
+        }),
+      ),
     },
     ({ subject_id, limit, offset }) =>
       client.api
@@ -1415,6 +2407,29 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.safeInteger(),
             v.minValue(1),
             v.description("历史修订版本 ID"),
+          ),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          type: v.number(),
+          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+          summary: v.string(),
+          created_at: v.string(),
+          data: v.optional(
+            v.object({
+              field_eps: v.number(),
+              field_infobox: v.string(),
+              field_summary: v.string(),
+              name: v.string(),
+              name_cn: v.string(),
+              platform: v.number(),
+              subject_id: v.number(),
+              type: v.number(),
+              type_id: v.number(),
+              vote_field: v.string(),
+            }),
           ),
         }),
       ),
@@ -1450,6 +2465,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+          data: v.array(
+            v.object({
+              id: v.number(),
+              type: v.number(),
+              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+              summary: v.string(),
+              created_at: v.string(),
+            }),
+          ),
+        }),
+      ),
     },
     ({ episode_id, limit, offset }) =>
       client.api
@@ -1475,6 +2506,21 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          type: v.number(),
+          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+          summary: v.string(),
+          created_at: v.string(),
+          data: v.optional(
+            v.pipe(
+              v.record(v.string(), v.unknown()),
+              v.description("编辑修改内容，响应类型不固定"),
+            ),
+          ),
+        }),
+      ),
     },
     ({ revision_id }) =>
       client.api
@@ -1495,6 +2541,20 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          title: v.string(),
+          desc: v.string(),
+          total: v.number(),
+          stat: v.object({ comments: v.number(), collects: v.number() }),
+          created_at: v.string(),
+          updated_at: v.string(),
+          creator: v.object({ username: v.string(), nickname: v.string() }),
+          ban: v.boolean(),
+          nsfw: v.boolean(),
+        }),
+      ),
     },
     () => client.api.POST("/v0/indices").then(toJsonResult),
   );
@@ -1508,6 +2568,20 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          title: v.string(),
+          desc: v.string(),
+          total: v.number(),
+          stat: v.object({ comments: v.number(), collects: v.number() }),
+          created_at: v.string(),
+          updated_at: v.string(),
+          creator: v.object({ username: v.string(), nickname: v.string() }),
+          ban: v.boolean(),
+          nsfw: v.boolean(),
         }),
       ),
     },
@@ -1533,6 +2607,20 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
           title: v.optional(v.pipe(v.string(), v.description("目录标题"))),
           description: v.optional(v.pipe(v.string(), v.description("目录描述"))),
+        }),
+      ),
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          id: v.number(),
+          title: v.string(),
+          desc: v.string(),
+          total: v.number(),
+          stat: v.object({ comments: v.number(), collects: v.number() }),
+          created_at: v.string(),
+          updated_at: v.string(),
+          creator: v.object({ username: v.string(), nickname: v.string() }),
+          ban: v.boolean(),
+          nsfw: v.boolean(),
         }),
       ),
     },
@@ -1574,6 +2662,15 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           ),
         }),
       ),
+      // 上游此接口存在问题：https://github.com/bangumi/api/issues/243
+      outputSchema: toStandardJsonSchema(
+        v.object({
+          data: v.array(v.unknown()),
+          total: v.number(),
+          limit: v.number(),
+          offset: v.number(),
+        }),
+      ),
     },
     ({ index_id, type, limit, offset }) =>
       client.api
@@ -1606,6 +2703,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ index_id, subject_id, sort, comment }) =>
       client.api
@@ -1637,6 +2735,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ index_id, subject_id, sort, comment }) =>
       client.api
@@ -1664,6 +2763,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ index_id, subject_id }) =>
       client.api
@@ -1689,6 +2789,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ index_id }) =>
       client.api
@@ -1714,6 +2815,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
         }),
       ),
+      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
     },
     ({ index_id }) =>
       client.api

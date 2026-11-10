@@ -2,8 +2,8 @@ apis:
   api:
     root: https://github.com/bangumi/api/raw/refs/heads/master/open-api/api.yml
     x-openapi-ts:
-      output: src/client/generated/api.d.ts
+      output: src/bangumi/generated/api.d.ts
   v0:
     root: https://github.com/bangumi/api/raw/refs/heads/master/open-api/v0.yaml
     x-openapi-ts:
-      output: src/client/generated/v0.d.ts
+      output: src/bangumi/generated/v0.d.ts
