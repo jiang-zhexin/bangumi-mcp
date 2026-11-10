@@ -10,14 +10,21 @@ interface ApiResult<T> {
   response: Response;
 }
 
-function apiError({ error, response }: ApiResult<unknown>): Error {
-  return new Error(
-    `Bangumi API error (${response.status} ${response.url}): ${typeof error === "string" ? error : JSON.stringify(error)}`,
-  );
+function apiError({ error, response }: ApiResult<unknown>): CallToolResult {
+  const detail = typeof error === "string" ? error : JSON.stringify(error);
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: `Bangumi API error (${response.status} ${response.url}): ${detail}`,
+      },
+    ],
+  };
 }
 
 function toJsonResult<T>(result: ApiResult<T>): CallToolResult {
-  if (!result.response.ok) throw apiError(result);
+  if (!result.response.ok) return apiError(result);
 
   const { data } = result;
   const structuredContent =
@@ -47,7 +54,7 @@ async function fetchInlineImage(url: string) {
 async function toImageResult(result: ApiResult<unknown>): Promise<CallToolResult> {
   const { response } = result;
   const location = response.status === 302 ? response.headers.get("Location") : null;
-  if (!location) throw apiError(result);
+  if (!location) return apiError(result);
 
   const url = new URL(location, response.url).href;
   const image = await fetchInlineImage(url).catch(() => undefined);
@@ -398,7 +405,20 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.pipe(
               v.object({
                 career: v.optional(
-                  v.pipe(v.array(v.string()), v.description("职业过滤列表，多值之间为「且」关系")),
+                  v.pipe(
+                    v.array(
+                      v.picklist([
+                        "producer",
+                        "mangaka",
+                        "artist",
+                        "seiyu",
+                        "writer",
+                        "illustrator",
+                        "actor",
+                      ]),
+                    ),
+                    v.description("职业过滤列表，多值之间为「且」关系"),
+                  ),
                 ),
               }),
               v.description("过滤条件，不同字段之间为「且」关系"),
@@ -492,9 +512,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.pipe(v.boolean(), v.description("是否为系列条目（仅对书籍类型有效）")),
           ),
           platform: v.optional(v.pipe(v.string(), v.description("游戏平台（仅对游戏类型有效）"))),
-          sort: v.optional(
-            v.pipe(v.string(), v.description("排序方式：`date`（日期）或 `rank`（排名）")),
-          ),
+          sort: v.optional(v.pipe(v.picklist(["date", "rank"]), v.description("排序方式"))),
           year: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("年份"))),
           month: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("月份"))),
           limit: v.optional(
@@ -681,8 +699,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
           type: v.pipe(
-            v.string(),
-            v.description("图片尺寸：`small`、`grid`、`large`、`medium`、`common`"),
+            v.picklist(["small", "grid", "large", "medium", "common"]),
+            v.description("图片尺寸"),
           ),
         }),
       ),
@@ -1022,7 +1040,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.minValue(1),
             v.description("角色 ID"),
           ),
-          type: v.pipe(v.string(), v.description("图片尺寸：`small`、`grid`、`large`、`medium`")),
+          type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("图片尺寸")),
         }),
       ),
       outputSchema: toStandardJsonSchema(
@@ -1128,7 +1146,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "collect_character_by_character_id_and_user_id",
+    "collect_character",
     {
       title: "收藏角色",
       description: "为当前登录用户收藏指定角色",
@@ -1159,7 +1177,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "uncollect_character_by_character_id_and_user_id",
+    "uncollect_character",
     {
       title: "取消收藏角色",
       description: "为当前登录用户取消收藏指定角色",
@@ -1252,7 +1270,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-          type: v.pipe(v.string(), v.description("图片尺寸：`small`、`grid`、`large`、`medium`")),
+          type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("图片尺寸")),
         }),
       ),
       outputSchema: toStandardJsonSchema(
@@ -1348,7 +1366,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "collect_person_by_person_id_and_user_id",
+    "collect_person",
     {
       title: "收藏人物",
       description: "为当前登录用户收藏指定人物",
@@ -1374,7 +1392,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "uncollect_person_by_person_id_and_user_id",
+    "uncollect_person",
     {
       title: "取消收藏人物",
       description: "为当前登录用户取消收藏指定人物",
@@ -1440,7 +1458,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.string(),
             v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
           ),
-          type: v.pipe(v.string(), v.description("头像尺寸：`small`、`large`、`medium`")),
+          type: v.pipe(v.picklist(["small", "large", "medium"]), v.description("头像尺寸")),
         }),
       ),
       outputSchema: toStandardJsonSchema(
@@ -1480,7 +1498,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "get_user_collections_by_username",
+    "get_user_collections",
     {
       title: "获取用户条目收藏列表",
       description: "分页获取指定用户的条目收藏列表（私有收藏仅本人可见）",
@@ -2193,7 +2211,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "get_person_revision_by_revision_id",
+    "get_person_revision_by_id",
     {
       title: "获取人物历史修订详情",
       description: "根据修订版本 ID 获取人物词条单次修订的详细内容",
@@ -2300,7 +2318,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "get_character_revision_by_revision_id",
+    "get_character_revision_by_id",
     {
       title: "获取角色历史修订详情",
       description: "根据修订版本 ID 获取角色词条单次修订的详细内容",
@@ -2393,7 +2411,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "get_subject_revision_by_revision_id",
+    "get_subject_revision_by_id",
     {
       title: "获取条目历史修订详情",
       description: "根据修订版本 ID 获取条目词条单次修订的详细内容",
@@ -2489,7 +2507,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "get_episode_revision_by_revision_id",
+    "get_episode_revision_by_id",
     {
       title: "获取章节历史修订详情",
       description: "根据修订版本 ID 获取章节单次修订的详细内容",
@@ -2679,7 +2697,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "add_subject_to_index_by_index_id",
+    "add_subject_to_index",
     {
       title: "向目录添加条目",
       description: "向指定目录中添加一个条目",
@@ -2713,7 +2731,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "edit_index_subjects_by_index_id_and_subject_id",
+    "edit_index_subject",
     {
       title: "修改目录中的条目信息",
       description: "修改目录中指定条目的排序权重或备注（若条目不存在于目录中则会创建）",
@@ -2745,7 +2763,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "delete_subject_from_index_by_index_id_and_subject_id",
+    "delete_subject_from_index",
     {
       title: "从目录移除条目",
       description: "从指定目录中删除某个条目",
@@ -2772,7 +2790,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "collect_index_by_index_id_and_user_id",
+    "collect_index",
     {
       title: "收藏目录",
       description: "为当前登录用户收藏指定目录",
@@ -2798,7 +2816,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   );
 
   server.registerTool(
-    "uncollect_index_by_index_id_and_user_id",
+    "uncollect_index",
     {
       title: "取消收藏目录",
       description: "为当前登录用户取消收藏指定目录",
