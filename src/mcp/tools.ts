@@ -65,100 +65,94 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         v.object({
           limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
           offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-          body: v.optional(
-            v.object({
-              keyword: v.pipe(v.string(), v.description("搜索关键词")),
-              sort: v.optional(
-                v.pipe(
-                  v.picklist(["match", "heat", "rank", "score"]),
-                  v.description(
-                    "排序规则：\n- `match`: 默认排序，按匹配程度\n- `heat`: 按收藏人数\n- `rank`: 按排名由高到低\n- `score`: 按评分",
+          keyword: v.pipe(v.string(), v.description("搜索关键词")),
+          sort: v.optional(
+            v.pipe(
+              v.picklist(["match", "heat", "rank", "score"]),
+              v.description(
+                "排序规则：\n- `match`: 默认排序，按匹配程度\n- `heat`: 按收藏人数\n- `rank`: 按排名由高到低\n- `score`: 按评分",
+              ),
+            ),
+          ),
+          filter: v.optional(
+            v.pipe(
+              v.object({
+                type: v.optional(
+                  v.pipe(
+                    v.array(
+                      v.pipe(
+                        v.picklist([1, 2, 3, 4, 6]),
+                        v.description("条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元（无 5）"),
+                      ),
+                    ),
+                    v.description(
+                      "条目类型列表（1=书籍，2=动画，3=音乐，4=游戏，6=三次元），多值之间为「或」关系",
+                    ),
                   ),
                 ),
-              ),
-              filter: v.optional(
-                v.pipe(
-                  v.object({
-                    type: v.optional(
-                      v.pipe(
-                        v.array(
-                          v.pipe(
-                            v.picklist([1, 2, 3, 4, 6]),
-                            v.description(
-                              "条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元（无 5）",
-                            ),
-                          ),
-                        ),
-                        v.description(
-                          "条目类型列表（1=书籍，2=动画，3=音乐，4=游戏，6=三次元），多值之间为「或」关系",
-                        ),
-                      ),
+                meta_tags: v.optional(
+                  v.pipe(
+                    v.array(v.string()),
+                    v.description(
+                      "公共标签列表，多值之间为「且」关系。可用 `-` 前缀排除标签，例如 `-科幻`",
                     ),
-                    meta_tags: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description(
-                          "公共标签列表，多值之间为「且」关系。可用 `-` 前缀排除标签，例如 `-科幻`",
-                        ),
-                      ),
-                    ),
-                    tag: v.optional(
-                      v.pipe(v.array(v.string()), v.description("标签列表，多值之间为「且」关系")),
-                    ),
-                    air_date: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description(
-                          "播出/发售日期过滤条件（格式 `YYYY-MM-DD`，支持比较前缀如 `>=2020-07-01`、`<2020-10-01`），多值之间为「且」关系",
-                        ),
-                      ),
-                    ),
-                    rating: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description(
-                          "评分过滤条件（支持比较前缀如 `>=6`、`<=8`），多值之间为「且」关系",
-                        ),
-                      ),
-                    ),
-                    rating_count: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description(
-                          "评分人数过滤条件（支持比较前缀如 `>=200`、`<=5000`），多值之间为「且」关系",
-                        ),
-                      ),
-                    ),
-                    rank: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description(
-                          "排名过滤条件（支持比较前缀如 `>100`、`<=200`），多值之间为「且」关系",
-                        ),
-                      ),
-                    ),
-                    nsfw: v.optional(
-                      v.pipe(
-                        v.boolean(),
-                        v.description(
-                          "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 条目；`false` 仅返回非 R18 条目（无权限用户忽略此字段，不会返回 R18）",
-                        ),
-                      ),
-                    ),
-                  }),
-                  v.description("过滤条件，不同字段之间为「且」关系"),
+                  ),
                 ),
-              ),
-            }),
+                tag: v.optional(
+                  v.pipe(v.array(v.string()), v.description("标签列表，多值之间为「且」关系")),
+                ),
+                air_date: v.optional(
+                  v.pipe(
+                    v.array(v.string()),
+                    v.description(
+                      "播出/发售日期过滤条件（格式 `YYYY-MM-DD`，支持比较前缀如 `>=2020-07-01`、`<2020-10-01`），多值之间为「且」关系",
+                    ),
+                  ),
+                ),
+                rating: v.optional(
+                  v.pipe(
+                    v.array(v.string()),
+                    v.description(
+                      "评分过滤条件（支持比较前缀如 `>=6`、`<=8`），多值之间为「且」关系",
+                    ),
+                  ),
+                ),
+                rating_count: v.optional(
+                  v.pipe(
+                    v.array(v.string()),
+                    v.description(
+                      "评分人数过滤条件（支持比较前缀如 `>=200`、`<=5000`），多值之间为「且」关系",
+                    ),
+                  ),
+                ),
+                rank: v.optional(
+                  v.pipe(
+                    v.array(v.string()),
+                    v.description(
+                      "排名过滤条件（支持比较前缀如 `>100`、`<=200`），多值之间为「且」关系",
+                    ),
+                  ),
+                ),
+                nsfw: v.optional(
+                  v.pipe(
+                    v.boolean(),
+                    v.description(
+                      "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 条目；`false` 仅返回非 R18 条目（无权限用户忽略此字段，不会返回 R18）",
+                    ),
+                  ),
+                ),
+              }),
+              v.description("过滤条件，不同字段之间为「且」关系"),
+            ),
           ),
         }),
       ),
     },
-    ({ limit, offset, body }) =>
+    ({ limit, offset, keyword, sort, filter }) =>
       toToolResult(
         client.api.POST("/v0/search/subjects", {
           params: { query: { limit, offset } },
-          body,
+          body: { keyword, sort, filter },
         }),
       ),
   );
@@ -173,34 +167,30 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         v.object({
           limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
           offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-          body: v.optional(
-            v.object({
-              keyword: v.pipe(v.string(), v.description("搜索关键词")),
-              filter: v.optional(
-                v.pipe(
-                  v.object({
-                    nsfw: v.optional(
-                      v.pipe(
-                        v.boolean(),
-                        v.description(
-                          "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 角色；`false` 仅返回非 R18 角色（无权限用户忽略此字段，不会返回 R18）",
-                        ),
-                      ),
+          keyword: v.pipe(v.string(), v.description("搜索关键词")),
+          filter: v.optional(
+            v.pipe(
+              v.object({
+                nsfw: v.optional(
+                  v.pipe(
+                    v.boolean(),
+                    v.description(
+                      "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 角色；`false` 仅返回非 R18 角色（无权限用户忽略此字段，不会返回 R18）",
                     ),
-                  }),
-                  v.description("过滤条件，不同字段之间为「且」关系"),
+                  ),
                 ),
-              ),
-            }),
+              }),
+              v.description("过滤条件，不同字段之间为「且」关系"),
+            ),
           ),
         }),
       ),
     },
-    ({ limit, offset, body }) =>
+    ({ limit, offset, keyword, filter }) =>
       toToolResult(
         client.api.POST("/v0/search/characters", {
           params: { query: { limit, offset } },
-          body,
+          body: { keyword, filter },
         }),
       ),
   );
@@ -215,32 +205,25 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         v.object({
           limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
           offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-          body: v.optional(
-            v.object({
-              keyword: v.pipe(v.string(), v.description("搜索关键词")),
-              filter: v.optional(
-                v.pipe(
-                  v.object({
-                    career: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description("职业过滤列表，多值之间为「且」关系"),
-                      ),
-                    ),
-                  }),
-                  v.description("过滤条件，不同字段之间为「且」关系"),
+          keyword: v.pipe(v.string(), v.description("搜索关键词")),
+          filter: v.optional(
+            v.pipe(
+              v.object({
+                career: v.optional(
+                  v.pipe(v.array(v.string()), v.description("职业过滤列表，多值之间为「且」关系")),
                 ),
-              ),
-            }),
+              }),
+              v.description("过滤条件，不同字段之间为「且」关系"),
+            ),
           ),
         }),
       ),
     },
-    ({ limit, offset, body }) =>
+    ({ limit, offset, keyword, filter }) =>
       toToolResult(
         client.api.POST("/v0/search/persons", {
           params: { query: { limit, offset } },
-          body,
+          body: { keyword, filter },
         }),
       ),
   );
@@ -911,56 +894,49 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          body: v.optional(
+          type: v.optional(
             v.pipe(
-              v.object({
-                type: v.optional(
-                  v.pipe(
-                    v.picklist([1, 2, 3, 4, 5]),
-                    v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
-                  ),
-                ),
-                rate: v.optional(
-                  v.pipe(
-                    v.number(),
-                    v.safeInteger(),
-                    v.minValue(0),
-                    v.maxValue(10),
-                    v.description("评分（1-10，`0` 表示删除评分）"),
-                  ),
-                ),
-                ep_status: v.optional(
-                  v.pipe(
-                    v.number(),
-                    v.safeInteger(),
-                    v.minValue(0),
-                    v.description("看到的话数进度（仅适用于书籍类条目）"),
-                  ),
-                ),
-                vol_status: v.optional(
-                  v.pipe(
-                    v.number(),
-                    v.safeInteger(),
-                    v.minValue(0),
-                    v.description("看到的卷数进度（仅适用于书籍类条目）"),
-                  ),
-                ),
-                comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
-                private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
-                tags: v.optional(
-                  v.pipe(
-                    v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
-                    v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
-                  ),
-                ),
-              }),
-              v.description("要设置或更新的收藏字段（所有字段均可选）"),
+              v.picklist([1, 2, 3, 4, 5]),
+              v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
+            ),
+          ),
+          rate: v.optional(
+            v.pipe(
+              v.number(),
+              v.safeInteger(),
+              v.minValue(0),
+              v.maxValue(10),
+              v.description("评分（1-10，`0` 表示删除评分）"),
+            ),
+          ),
+          ep_status: v.optional(
+            v.pipe(
+              v.number(),
+              v.safeInteger(),
+              v.minValue(0),
+              v.description("看到的话数进度（仅适用于书籍类条目）"),
+            ),
+          ),
+          vol_status: v.optional(
+            v.pipe(
+              v.number(),
+              v.safeInteger(),
+              v.minValue(0),
+              v.description("看到的卷数进度（仅适用于书籍类条目）"),
+            ),
+          ),
+          comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
+          private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
+          tags: v.optional(
+            v.pipe(
+              v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
+              v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
             ),
           ),
         }),
       ),
     },
-    ({ subject_id, body }) =>
+    ({ subject_id, ...body }) =>
       toToolResult(
         client.api.POST("/v0/users/-/collections/{subject_id}", {
           params: { path: { subject_id } },
@@ -984,56 +960,49 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          body: v.optional(
+          type: v.optional(
             v.pipe(
-              v.object({
-                type: v.optional(
-                  v.pipe(
-                    v.picklist([1, 2, 3, 4, 5]),
-                    v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
-                  ),
-                ),
-                rate: v.optional(
-                  v.pipe(
-                    v.number(),
-                    v.safeInteger(),
-                    v.minValue(0),
-                    v.maxValue(10),
-                    v.description("评分（1-10，`0` 表示删除评分）"),
-                  ),
-                ),
-                ep_status: v.optional(
-                  v.pipe(
-                    v.number(),
-                    v.safeInteger(),
-                    v.minValue(0),
-                    v.description("看到的话数进度（仅适用于书籍类条目）"),
-                  ),
-                ),
-                vol_status: v.optional(
-                  v.pipe(
-                    v.number(),
-                    v.safeInteger(),
-                    v.minValue(0),
-                    v.description("看到的卷数进度（仅适用于书籍类条目）"),
-                  ),
-                ),
-                comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
-                private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
-                tags: v.optional(
-                  v.pipe(
-                    v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
-                    v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
-                  ),
-                ),
-              }),
-              v.description("要更新的收藏字段（所有字段均可选）"),
+              v.picklist([1, 2, 3, 4, 5]),
+              v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
+            ),
+          ),
+          rate: v.optional(
+            v.pipe(
+              v.number(),
+              v.safeInteger(),
+              v.minValue(0),
+              v.maxValue(10),
+              v.description("评分（1-10，`0` 表示删除评分）"),
+            ),
+          ),
+          ep_status: v.optional(
+            v.pipe(
+              v.number(),
+              v.safeInteger(),
+              v.minValue(0),
+              v.description("看到的话数进度（仅适用于书籍类条目）"),
+            ),
+          ),
+          vol_status: v.optional(
+            v.pipe(
+              v.number(),
+              v.safeInteger(),
+              v.minValue(0),
+              v.description("看到的卷数进度（仅适用于书籍类条目）"),
+            ),
+          ),
+          comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
+          private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
+          tags: v.optional(
+            v.pipe(
+              v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
+              v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
             ),
           ),
         }),
       ),
     },
-    ({ subject_id, body }) =>
+    ({ subject_id, ...body }) =>
       toToolResult(
         client.api.PATCH("/v0/users/-/collections/{subject_id}", {
           params: { path: { subject_id } },
@@ -1097,26 +1066,22 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          body: v.optional(
-            v.object({
-              episode_id: v.pipe(
-                v.array(v.pipe(v.number(), v.safeInteger())),
-                v.description("要更新的章节 ID 列表"),
-              ),
-              type: v.pipe(
-                v.picklist([0, 1, 2, 3]),
-                v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
-              ),
-            }),
+          episode_id: v.pipe(
+            v.array(v.pipe(v.number(), v.safeInteger())),
+            v.description("要更新的章节 ID 列表"),
+          ),
+          type: v.pipe(
+            v.picklist([0, 1, 2, 3]),
+            v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
           ),
         }),
       ),
     },
-    ({ subject_id, body }) =>
+    ({ subject_id, episode_id, type }) =>
       toToolResult(
         client.api.PATCH("/v0/users/-/collections/{subject_id}/episodes", {
           params: { path: { subject_id } },
-          body,
+          body: { episode_id, type },
         }),
       ),
   );
@@ -1155,22 +1120,18 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
-          body: v.optional(
-            v.object({
-              type: v.pipe(
-                v.picklist([0, 1, 2, 3]),
-                v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
-              ),
-            }),
+          type: v.pipe(
+            v.picklist([0, 1, 2, 3]),
+            v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
           ),
         }),
       ),
     },
-    ({ episode_id, body }) =>
+    ({ episode_id, type }) =>
       toToolResult(
         client.api.PUT("/v0/users/-/collections/-/episodes/{episode_id}", {
           params: { path: { episode_id } },
-          body,
+          body: { type },
         }),
       ),
   );
@@ -1552,21 +1513,17 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          body: v.optional(
-            v.pipe(
-              v.object({
-                title: v.optional(v.pipe(v.string(), v.description("目录标题"))),
-                description: v.optional(v.pipe(v.string(), v.description("目录描述"))),
-              }),
-              v.description("要修改的目录标题与描述"),
-            ),
-          ),
+          title: v.optional(v.pipe(v.string(), v.description("目录标题"))),
+          description: v.optional(v.pipe(v.string(), v.description("目录描述"))),
         }),
       ),
     },
-    ({ index_id, body }) =>
+    ({ index_id, title, description }) =>
       toToolResult(
-        client.api.PUT("/v0/indices/{index_id}", { params: { path: { index_id } }, body }),
+        client.api.PUT("/v0/indices/{index_id}", {
+          params: { path: { index_id } },
+          body: { title, description },
+        }),
       ),
   );
 
@@ -1622,28 +1579,21 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       inputSchema: toStandardJsonSchema(
         v.object({
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          body: v.optional(
-            v.pipe(
-              v.object({
-                subject_id: v.optional(
-                  v.pipe(v.number(), v.safeInteger(), v.description("要添加的条目 ID")),
-                ),
-                sort: v.optional(
-                  v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
-                ),
-                comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
-              }),
-              v.description("新增条目到目录的请求信息"),
-            ),
+          subject_id: v.optional(
+            v.pipe(v.number(), v.safeInteger(), v.description("要添加的条目 ID")),
           ),
+          sort: v.optional(
+            v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
+          ),
+          comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
         }),
       ),
     },
-    ({ index_id, body }) =>
+    ({ index_id, subject_id, sort, comment }) =>
       toToolResult(
         client.api.POST("/v0/indices/{index_id}/subjects", {
           params: { path: { index_id } },
-          body,
+          body: { subject_id, sort, comment },
         }),
       ),
   );
@@ -1663,25 +1613,18 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         v.object({
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          body: v.optional(
-            v.pipe(
-              v.object({
-                sort: v.optional(
-                  v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
-                ),
-                comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
-              }),
-              v.description("修改目录中条目的信息"),
-            ),
+          sort: v.optional(
+            v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
           ),
+          comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
         }),
       ),
     },
-    ({ index_id, subject_id, body }) =>
+    ({ index_id, subject_id, sort, comment }) =>
       toToolResult(
         client.api.PUT("/v0/indices/{index_id}/subjects/{subject_id}", {
           params: { path: { index_id, subject_id } },
-          body,
+          body: { sort, comment },
         }),
       ),
   );
