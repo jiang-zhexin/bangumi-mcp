@@ -2,45 +2,63 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { toStandardJsonSchema } from "@valibot/to-json-schema";
 import * as v from "valibot";
 
-import type { BangumiClient } from "@/bangumi";
+import { type BangumiClient, DEFAULT_BGM_USER_AGENT } from "@/bangumi";
 
-async function toToolResult(
-  request: Promise<{ data?: unknown; error?: unknown; response: Response }>,
-  image = false,
-) {
-  try {
-    const { data, error, response } = await request;
-    let result = data;
-    if (image && response.status === 302) {
-      const location = response.headers.get("Location");
-      if (!location) throw new Error("Bangumi image response is missing Location");
-      result = { url: new URL(location, response.url).href };
-    } else if (!response.ok) {
-      throw new Error(
-        `Bangumi API error (${response.status} ${response.url}): ${typeof error === "string" ? error : JSON.stringify(error)}`,
-      );
-    }
-    const structuredContent =
-      result === undefined
-        ? { success: true }
-        : result !== null && typeof result === "object" && !Array.isArray(result)
-          ? (result as Record<string, unknown>)
-          : { data: result };
-    return {
-      content: [{ type: "text" as const, text: JSON.stringify(structuredContent) }],
-      structuredContent,
-    };
-  } catch (error) {
-    return {
-      isError: true,
-      content: [
-        {
-          type: "text" as const,
-          text: error instanceof Error ? error.message : String(error),
-        },
-      ],
-    };
+interface ApiResult<T> {
+  data?: T;
+  error?: unknown;
+  response: Response;
+}
+
+function apiError({ error, response }: ApiResult<unknown>): Error {
+  return new Error(
+    `Bangumi API error (${response.status} ${response.url}): ${typeof error === "string" ? error : JSON.stringify(error)}`,
+  );
+}
+
+function toJsonResult<T>(result: ApiResult<T>) {
+  if (!result.response.ok) throw apiError(result);
+
+  const { data } = result;
+  const structuredContent =
+    data === undefined
+      ? { success: true }
+      : data !== null && typeof data === "object" && !Array.isArray(data)
+        ? (data as Record<string, unknown>)
+        : { data };
+
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(structuredContent) }],
+    structuredContent,
+  };
+}
+
+async function fetchInlineImage(url: string) {
+  const response = await fetch(url, { headers: { "User-Agent": DEFAULT_BGM_USER_AGENT } });
+  const mimeType = response.headers.get("Content-Type")?.split(";")[0]?.trim();
+  if (!response.ok || !mimeType?.startsWith("image/")) {
+    await response.body?.cancel();
+    return;
   }
+  const bytes = await response.bytes();
+  return { data: bytes.toBase64(), mimeType };
+}
+
+async function toImageResult(result: ApiResult<unknown>) {
+  const { response } = result;
+  const location = response.status === 302 ? response.headers.get("Location") : null;
+  if (!location) throw apiError(result);
+
+  const url = new URL(location, response.url).href;
+  const image = await fetchInlineImage(url).catch();
+  const structuredContent = image ? { url, mimeType: image.mimeType } : { url };
+  return {
+    content: [
+      ...(image ? [{ type: "image" as const, ...image }] : []),
+      { type: "text" as const, text: JSON.stringify(structuredContent) },
+    ],
+    structuredContent,
+  };
 }
 
 export function registerApiTools(server: McpServer, client: BangumiClient): void {
@@ -51,7 +69,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       description: "获取每周每日放送的番剧时间表",
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    () => toToolResult(client.api.GET("/calendar")),
+    () => client.api.GET("/calendar").then(toJsonResult),
   );
 
   server.registerTool(
@@ -149,12 +167,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ limit, offset, keyword, sort, filter }) =>
-      toToolResult(
-        client.api.POST("/v0/search/subjects", {
+      client.api
+        .POST("/v0/search/subjects", {
           params: { query: { limit, offset } },
           body: { keyword, sort, filter },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -187,12 +205,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ limit, offset, keyword, filter }) =>
-      toToolResult(
-        client.api.POST("/v0/search/characters", {
+      client.api
+        .POST("/v0/search/characters", {
           params: { query: { limit, offset } },
           body: { keyword, filter },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -220,12 +238,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ limit, offset, keyword, filter }) =>
-      toToolResult(
-        client.api.POST("/v0/search/persons", {
+      client.api
+        .POST("/v0/search/persons", {
           params: { query: { limit, offset } },
           body: { keyword, filter },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -290,13 +308,13 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ type, cat, series, platform, sort, year, month, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/subjects", {
+      client.api
+        .GET("/v0/subjects", {
           params: {
             query: { type, cat, series, platform, sort, year, month, limit, offset },
           },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -312,16 +330,16 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id }) =>
-      toToolResult(
-        client.api.GET("/v0/subjects/{subject_id}", { params: { path: { subject_id } } }),
-      ),
+      client.api
+        .GET("/v0/subjects/{subject_id}", { params: { path: { subject_id } } })
+        .then(toJsonResult),
   );
 
   server.registerTool(
     "get_subject_image_by_id",
     {
       title: "获取条目封面图",
-      description: "根据条目 ID 和尺寸类型获取条目封面图片 URL",
+      description: "根据条目 ID 和尺寸类型获取条目封面图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -334,13 +352,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, type }) =>
-      toToolResult(
-        client.api.GET("/v0/subjects/{subject_id}/image", {
+      client.api
+        .GET("/v0/subjects/{subject_id}/image", {
           params: { path: { subject_id }, query: { type } },
           redirect: "manual",
-        }),
-        true,
-      ),
+        })
+        .then(toImageResult),
   );
 
   server.registerTool(
@@ -356,11 +373,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id }) =>
-      toToolResult(
-        client.api.GET("/v0/subjects/{subject_id}/persons", {
+      client.api
+        .GET("/v0/subjects/{subject_id}/persons", {
           params: { path: { subject_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -376,11 +393,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id }) =>
-      toToolResult(
-        client.api.GET("/v0/subjects/{subject_id}/characters", {
+      client.api
+        .GET("/v0/subjects/{subject_id}/characters", {
           params: { path: { subject_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -396,11 +413,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id }) =>
-      toToolResult(
-        client.api.GET("/v0/subjects/{subject_id}/subjects", {
+      client.api
+        .GET("/v0/subjects/{subject_id}/subjects", {
           params: { path: { subject_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -436,11 +453,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, type, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/episodes", {
+      client.api
+        .GET("/v0/episodes", {
           params: { query: { subject_id, type, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -456,9 +473,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ episode_id }) =>
-      toToolResult(
-        client.api.GET("/v0/episodes/{episode_id}", { params: { path: { episode_id } } }),
-      ),
+      client.api
+        .GET("/v0/episodes/{episode_id}", { params: { path: { episode_id } } })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -479,18 +496,18 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id }) =>
-      toToolResult(
-        client.api.GET("/v0/characters/{character_id}", {
+      client.api
+        .GET("/v0/characters/{character_id}", {
           params: { path: { character_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
     "get_character_image_by_id",
     {
       title: "获取角色肖像图",
-      description: "根据角色 ID 和尺寸类型获取角色肖像图片 URL",
+      description: "根据角色 ID 和尺寸类型获取角色肖像图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -505,13 +522,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id, type }) =>
-      toToolResult(
-        client.api.GET("/v0/characters/{character_id}/image", {
+      client.api
+        .GET("/v0/characters/{character_id}/image", {
           params: { path: { character_id }, query: { type } },
           redirect: "manual",
-        }),
-        true,
-      ),
+        })
+        .then(toImageResult),
   );
 
   server.registerTool(
@@ -532,11 +548,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id }) =>
-      toToolResult(
-        client.api.GET("/v0/characters/{character_id}/subjects", {
+      client.api
+        .GET("/v0/characters/{character_id}/subjects", {
           params: { path: { character_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -557,11 +573,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id }) =>
-      toToolResult(
-        client.api.GET("/v0/characters/{character_id}/persons", {
+      client.api
+        .GET("/v0/characters/{character_id}/persons", {
           params: { path: { character_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -587,11 +603,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id }) =>
-      toToolResult(
-        client.api.POST("/v0/characters/{character_id}/collect", {
+      client.api
+        .POST("/v0/characters/{character_id}/collect", {
           params: { path: { character_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -617,11 +633,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id }) =>
-      toToolResult(
-        client.api.DELETE("/v0/characters/{character_id}/collect", {
+      client.api
+        .DELETE("/v0/characters/{character_id}/collect", {
           params: { path: { character_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -637,14 +653,16 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id }) =>
-      toToolResult(client.api.GET("/v0/persons/{person_id}", { params: { path: { person_id } } })),
+      client.api
+        .GET("/v0/persons/{person_id}", { params: { path: { person_id } } })
+        .then(toJsonResult),
   );
 
   server.registerTool(
     "get_person_image_by_id",
     {
       title: "获取人物肖像图",
-      description: "根据人物 ID 和尺寸类型获取人物肖像图片 URL",
+      description: "根据人物 ID 和尺寸类型获取人物肖像图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -654,13 +672,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id, type }) =>
-      toToolResult(
-        client.api.GET("/v0/persons/{person_id}/image", {
+      client.api
+        .GET("/v0/persons/{person_id}/image", {
           params: { path: { person_id }, query: { type } },
           redirect: "manual",
-        }),
-        true,
-      ),
+        })
+        .then(toImageResult),
   );
 
   server.registerTool(
@@ -676,11 +693,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id }) =>
-      toToolResult(
-        client.api.GET("/v0/persons/{person_id}/subjects", {
+      client.api
+        .GET("/v0/persons/{person_id}/subjects", {
           params: { path: { person_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -696,11 +713,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id }) =>
-      toToolResult(
-        client.api.GET("/v0/persons/{person_id}/characters", {
+      client.api
+        .GET("/v0/persons/{person_id}/characters", {
           params: { path: { person_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -721,11 +738,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id }) =>
-      toToolResult(
-        client.api.POST("/v0/persons/{person_id}/collect", {
+      client.api
+        .POST("/v0/persons/{person_id}/collect", {
           params: { path: { person_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -746,11 +763,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id }) =>
-      toToolResult(
-        client.api.DELETE("/v0/persons/{person_id}/collect", {
+      client.api
+        .DELETE("/v0/persons/{person_id}/collect", {
           params: { path: { person_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -769,14 +786,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username }) =>
-      toToolResult(client.api.GET("/v0/users/{username}", { params: { path: { username } } })),
+      client.api.GET("/v0/users/{username}", { params: { path: { username } } }).then(toJsonResult),
   );
 
   server.registerTool(
     "get_user_avatar_by_name",
     {
       title: "获取用户头像",
-      description: "根据用户名和尺寸类型获取用户头像图片 URL",
+      description: "根据用户名和尺寸类型获取用户头像图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -789,13 +806,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username, type }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/avatar", {
+      client.api
+        .GET("/v0/users/{username}/avatar", {
           params: { path: { username }, query: { type } },
           redirect: "manual",
-        }),
-        true,
-      ),
+        })
+        .then(toImageResult),
   );
 
   server.registerTool(
@@ -805,7 +821,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       description: "获取当前授权登录用户的个人信息（包括 username、UID、昵称等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    () => toToolResult(client.api.GET("/v0/me")),
+    () => client.api.GET("/v0/me").then(toJsonResult),
   );
 
   server.registerTool(
@@ -848,11 +864,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username, subject_type, type, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/collections", {
+      client.api
+        .GET("/v0/users/{username}/collections", {
           params: { path: { username }, query: { subject_type, type, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -872,11 +888,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username, subject_id }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/collections/{subject_id}", {
+      client.api
+        .GET("/v0/users/{username}/collections/{subject_id}", {
           params: { path: { username, subject_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -937,12 +953,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, ...body }) =>
-      toToolResult(
-        client.api.POST("/v0/users/-/collections/{subject_id}", {
+      client.api
+        .POST("/v0/users/-/collections/{subject_id}", {
           params: { path: { subject_id } },
           body,
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1003,12 +1019,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, ...body }) =>
-      toToolResult(
-        client.api.PATCH("/v0/users/-/collections/{subject_id}", {
+      client.api
+        .PATCH("/v0/users/-/collections/{subject_id}", {
           params: { path: { subject_id } },
           body,
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1044,11 +1060,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, offset, limit, episode_type }) =>
-      toToolResult(
-        client.api.GET("/v0/users/-/collections/{subject_id}/episodes", {
+      client.api
+        .GET("/v0/users/-/collections/{subject_id}/episodes", {
           params: { path: { subject_id }, query: { offset, limit, episode_type } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1078,12 +1094,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, episode_id, type }) =>
-      toToolResult(
-        client.api.PATCH("/v0/users/-/collections/{subject_id}/episodes", {
+      client.api
+        .PATCH("/v0/users/-/collections/{subject_id}/episodes", {
           params: { path: { subject_id } },
           body: { episode_id, type },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1099,11 +1115,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ episode_id }) =>
-      toToolResult(
-        client.api.GET("/v0/users/-/collections/-/episodes/{episode_id}", {
+      client.api
+        .GET("/v0/users/-/collections/-/episodes/{episode_id}", {
           params: { path: { episode_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1128,12 +1144,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ episode_id, type }) =>
-      toToolResult(
-        client.api.PUT("/v0/users/-/collections/-/episodes/{episode_id}", {
+      client.api
+        .PUT("/v0/users/-/collections/-/episodes/{episode_id}", {
           params: { path: { episode_id } },
           body: { type },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1152,11 +1168,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/collections/-/characters", {
+      client.api
+        .GET("/v0/users/{username}/collections/-/characters", {
           params: { path: { username } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1181,11 +1197,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username, character_id }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/collections/-/characters/{character_id}", {
+      client.api
+        .GET("/v0/users/{username}/collections/-/characters/{character_id}", {
           params: { path: { username, character_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1204,11 +1220,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/collections/-/persons", {
+      client.api
+        .GET("/v0/users/{username}/collections/-/persons", {
           params: { path: { username } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1228,11 +1244,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ username, person_id }) =>
-      toToolResult(
-        client.api.GET("/v0/users/{username}/collections/-/persons/{person_id}", {
+      client.api
+        .GET("/v0/users/{username}/collections/-/persons/{person_id}", {
           params: { path: { username, person_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1260,11 +1276,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ person_id, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/persons", {
+      client.api
+        .GET("/v0/revisions/persons", {
           params: { query: { person_id, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1285,11 +1301,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ revision_id }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/persons/{revision_id}", {
+      client.api
+        .GET("/v0/revisions/persons/{revision_id}", {
           params: { path: { revision_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1322,11 +1338,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ character_id, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/characters", {
+      client.api
+        .GET("/v0/revisions/characters", {
           params: { query: { character_id, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1347,11 +1363,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ revision_id }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/characters/{revision_id}", {
+      client.api
+        .GET("/v0/revisions/characters/{revision_id}", {
           params: { path: { revision_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1379,11 +1395,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ subject_id, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/subjects", {
+      client.api
+        .GET("/v0/revisions/subjects", {
           params: { query: { subject_id, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1404,11 +1420,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ revision_id }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/subjects/{revision_id}", {
+      client.api
+        .GET("/v0/revisions/subjects/{revision_id}", {
           params: { path: { revision_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1436,11 +1452,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ episode_id, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/episodes", {
+      client.api
+        .GET("/v0/revisions/episodes", {
           params: { query: { episode_id, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1461,11 +1477,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ revision_id }) =>
-      toToolResult(
-        client.api.GET("/v0/revisions/episodes/{revision_id}", {
+      client.api
+        .GET("/v0/revisions/episodes/{revision_id}", {
           params: { path: { revision_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1480,7 +1496,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         openWorldHint: true,
       },
     },
-    () => toToolResult(client.api.POST("/v0/indices")),
+    () => client.api.POST("/v0/indices").then(toJsonResult),
   );
 
   server.registerTool(
@@ -1496,7 +1512,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id }) =>
-      toToolResult(client.api.GET("/v0/indices/{index_id}", { params: { path: { index_id } } })),
+      client.api
+        .GET("/v0/indices/{index_id}", { params: { path: { index_id } } })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1519,12 +1537,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id, title, description }) =>
-      toToolResult(
-        client.api.PUT("/v0/indices/{index_id}", {
+      client.api
+        .PUT("/v0/indices/{index_id}", {
           params: { path: { index_id } },
           body: { title, description },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1558,11 +1576,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id, type, limit, offset }) =>
-      toToolResult(
-        client.api.GET("/v0/indices/{index_id}/subjects", {
+      client.api
+        .GET("/v0/indices/{index_id}/subjects", {
           params: { path: { index_id }, query: { type, limit, offset } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1590,12 +1608,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id, subject_id, sort, comment }) =>
-      toToolResult(
-        client.api.POST("/v0/indices/{index_id}/subjects", {
+      client.api
+        .POST("/v0/indices/{index_id}/subjects", {
           params: { path: { index_id } },
           body: { subject_id, sort, comment },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1621,12 +1639,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id, subject_id, sort, comment }) =>
-      toToolResult(
-        client.api.PUT("/v0/indices/{index_id}/subjects/{subject_id}", {
+      client.api
+        .PUT("/v0/indices/{index_id}/subjects/{subject_id}", {
           params: { path: { index_id, subject_id } },
           body: { sort, comment },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1648,11 +1666,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id, subject_id }) =>
-      toToolResult(
-        client.api.DELETE("/v0/indices/{index_id}/subjects/{subject_id}", {
+      client.api
+        .DELETE("/v0/indices/{index_id}/subjects/{subject_id}", {
           params: { path: { index_id, subject_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1673,11 +1691,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id }) =>
-      toToolResult(
-        client.api.POST("/v0/indices/{index_id}/collect", {
+      client.api
+        .POST("/v0/indices/{index_id}/collect", {
           params: { path: { index_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 
   server.registerTool(
@@ -1698,10 +1716,10 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       ),
     },
     ({ index_id }) =>
-      toToolResult(
-        client.api.DELETE("/v0/indices/{index_id}/collect", {
+      client.api
+        .DELETE("/v0/indices/{index_id}/collect", {
           params: { path: { index_id } },
-        }),
-      ),
+        })
+        .then(toJsonResult),
   );
 }
