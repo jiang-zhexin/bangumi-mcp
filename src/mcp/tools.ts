@@ -48,7 +48,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_calendar",
     {
       title: "每日放送",
-      description: "每日放送\n\nGET /calendar",
+      description: "获取每周每日放送的番剧时间表",
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     () => toToolResult(client.api.GET("/calendar")),
@@ -59,20 +59,20 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     {
       title: "条目搜索",
       description:
-        "条目搜索\n\n## 实验性 API， 本 schema 和实际的 API 行为都可能随时发生改动\n\n目前支持的筛选条件包括:\n- `type`: 条目类型，参照 `SubjectType` enum， `或`。\n- `tag`: 标签，可以多次出现。`且` 关系。\n- `air_date`: 播出日期/发售日期。`且` 关系。\n- `rating`: 用于搜索指定评分的条目。`且` 关系。\n- `rating_count`: 用于按照评分人数筛选条目。`且` 关系。\n- `rank`: 用于搜索指定排名的条目。`且` 关系。\n- `nsfw`: 使用 `include` 包含NSFW搜索结果。默认排除搜索NSFW条目。无权限情况下忽略此选项，不会返回NSFW条目。\n\n不同筛选条件之间为 `且`\n\nPOST /v0/search/subjects\n\n请求体通过 body 参数传入。",
+        "根据关键词和过滤条件搜索条目（书籍、动画、音乐、游戏、三次元）。不同筛选条件之间为「且」关系。",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页参数"))),
-          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页参数"))),
+          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
+          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
           body: v.optional(
             v.object({
-              keyword: v.string(),
+              keyword: v.pipe(v.string(), v.description("搜索关键词")),
               sort: v.optional(
                 v.pipe(
                   v.picklist(["match", "heat", "rank", "score"]),
                   v.description(
-                    "排序规则\n\n- `match` meilisearch 的默认排序，按照匹配程度\n- `heat` 收藏人数\n- `rank` 排名由高到低\n- `score` 评分",
+                    "排序规则：\n- `match`: 默认排序，按匹配程度\n- `heat`: 按收藏人数\n- `rank`: 按排名由高到低\n- `score`: 按评分",
                   ),
                 ),
               ),
@@ -85,12 +85,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                           v.pipe(
                             v.picklist([1, 2, 3, 4, 6]),
                             v.description(
-                              "条目类型\n- `1` 为 书籍\n- `2` 为 动画\n- `3` 为 音乐\n- `4` 为 游戏\n- `6` 为 三次元\n\n没有 `5`",
+                              "条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元（无 5）",
                             ),
                           ),
                         ),
                         v.description(
-                          "条目类型，参照 `SubjectType` enum，多值之间为 `或` 的关系。",
+                          "条目类型列表（1=书籍，2=动画，3=音乐，4=游戏，6=三次元），多值之间为「或」关系",
                         ),
                       ),
                     ),
@@ -98,54 +98,55 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                       v.pipe(
                         v.array(v.string()),
                         v.description(
-                          "公共标签。多个值之间为 `且` 关系。可以用 `-` 排除标签。比如 `-科幻` 可以排除科幻标签。",
+                          "公共标签列表，多值之间为「且」关系。可用 `-` 前缀排除标签，例如 `-科幻`",
                         ),
                       ),
                     ),
                     tag: v.optional(
-                      v.pipe(
-                        v.array(v.string()),
-                        v.description("标签，可以多次出现。多值之间为 `且` 关系。"),
-                      ),
+                      v.pipe(v.array(v.string()), v.description("标签列表，多值之间为「且」关系")),
                     ),
                     air_date: v.optional(
                       v.pipe(
                         v.array(v.string()),
                         v.description(
-                          "播出日期/发售日期，日期必需为 `YYYY-MM-DD` 格式。多值之间为 `且` 关系。",
+                          "播出/发售日期过滤条件（格式 `YYYY-MM-DD`，支持比较前缀如 `>=2020-07-01`、`<2020-10-01`），多值之间为「且」关系",
                         ),
                       ),
                     ),
                     rating: v.optional(
                       v.pipe(
                         v.array(v.string()),
-                        v.description("用于搜索指定评分的条目，多值之间为 `且` 关系。"),
+                        v.description(
+                          "评分过滤条件（支持比较前缀如 `>=6`、`<=8`），多值之间为「且」关系",
+                        ),
                       ),
                     ),
                     rating_count: v.optional(
                       v.pipe(
                         v.array(v.string()),
                         v.description(
-                          "用于按照评分人数筛选条目，多值之间为 `且` 关系，格式与 `rating` 相同。",
+                          "评分人数过滤条件（支持比较前缀如 `>=200`、`<=5000`），多值之间为「且」关系",
                         ),
                       ),
                     ),
                     rank: v.optional(
                       v.pipe(
                         v.array(v.string()),
-                        v.description("用于搜索指定排名的条目，多值之间为 `且` 关系。"),
+                        v.description(
+                          "排名过滤条件（支持比较前缀如 `>100`、`<=200`），多值之间为「且」关系",
+                        ),
                       ),
                     ),
                     nsfw: v.optional(
                       v.pipe(
                         v.boolean(),
                         v.description(
-                          "无权限的用户会直接忽略此字段，不会返回R18条目。\n\n默认或者 `null` 会返回包含 R18 的所有搜索结果。\n\n`true` 只会返回 R18 条目。\n\n`false` 只会返回非 R18 条目。",
+                          "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 条目；`false` 仅返回非 R18 条目（无权限用户忽略此字段，不会返回 R18）",
                         ),
                       ),
                     ),
                   }),
-                  v.description("不同条件之间是 `且` 的关系"),
+                  v.description("过滤条件，不同字段之间为「且」关系"),
                 ),
               ),
             }),
@@ -166,16 +167,15 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "search_characters",
     {
       title: "角色搜索",
-      description:
-        "角色搜索\n\n## 实验性 API， 本 schema 和实际的 API 行为都可能随时发生改动\n\n目前支持的筛选条件包括:\n- `nsfw`: 使用 `include` 包含NSFW搜索结果。默认排除搜索NSFW条目。无权限情况下忽略此选项，不会返回NSFW条目。\n\nPOST /v0/search/characters\n\n请求体通过 body 参数传入。",
+      description: "根据关键词搜索虚拟角色",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页参数"))),
-          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页参数"))),
+          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
+          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
           body: v.optional(
             v.object({
-              keyword: v.string(),
+              keyword: v.pipe(v.string(), v.description("搜索关键词")),
               filter: v.optional(
                 v.pipe(
                   v.object({
@@ -183,12 +183,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                       v.pipe(
                         v.boolean(),
                         v.description(
-                          "无权限的用户会直接忽略此字段，不会返回 R18 角色。\n\n默认或者 `null` 会返回包含 R18 的所有搜索结果。\n\n`true` 只会返回 R18 角色。\n\n`false` 只会返回非 R18 角色。",
+                          "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 角色；`false` 仅返回非 R18 角色（无权限用户忽略此字段，不会返回 R18）",
                         ),
                       ),
                     ),
                   }),
-                  v.description("不同条件之间是 `且` 的关系"),
+                  v.description("过滤条件，不同字段之间为「且」关系"),
                 ),
               ),
             }),
@@ -209,27 +209,26 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "search_persons",
     {
       title: "人物搜索",
-      description:
-        "人物搜索\n\n## 实验性 API， 本 schema 和实际的 API 行为都可能随时发生改动\n\n目前支持的筛选条件包括:\n- `career`: 职业，可以多次出现。`且` 关系。\n\n不同筛选条件之间为 `且`\n\nPOST /v0/search/persons\n\n请求体通过 body 参数传入。",
+      description: "根据关键词和职业搜索现实人物或制作团体（声优、作者、监督、制作公司等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页参数"))),
-          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页参数"))),
+          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
+          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
           body: v.optional(
             v.object({
-              keyword: v.string(),
+              keyword: v.pipe(v.string(), v.description("搜索关键词")),
               filter: v.optional(
                 v.pipe(
                   v.object({
                     career: v.optional(
                       v.pipe(
                         v.array(v.string()),
-                        v.description("职业，可以多次出现。多值之间为 `且` 关系。"),
+                        v.description("职业过滤列表，多值之间为「且」关系"),
                       ),
                     ),
                   }),
-                  v.description("不同条件之间是 `且` 的关系"),
+                  v.description("过滤条件，不同字段之间为「且」关系"),
                 ),
               ),
             }),
@@ -250,47 +249,46 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_subjects",
     {
       title: "浏览条目",
-      description: "浏览条目\n\n第一页会 cache 24h，之后会 cache 1h\n\nGET /v0/subjects",
+      description: "按条目类型、子分类、年份、月份等条件分页浏览条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          type: v.pipe(v.picklist([1, 2, 3, 4, 6]), v.description("条目类型")),
+          type: v.pipe(
+            v.picklist([1, 2, 3, 4, 6]),
+            v.description("条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
+          ),
           cat: v.optional(
             v.pipe(
               v.union([
                 v.pipe(
                   v.picklist([0, 1001, 1002, 1003]),
-                  v.description(
-                    "书籍类型\n- `0` 为 其他\n- `1001` 为 漫画\n- `1002` 为 小说\n- `1003` 为 画集",
-                  ),
+                  v.description("书籍分类：0=其他，1001=漫画，1002=小说，1003=画集"),
                 ),
                 v.pipe(
                   v.picklist([0, 1, 2, 3, 5]),
-                  v.description(
-                    "动画类型\n- `0` 为 其他\n- `1` 为 TV\n- `2` 为 OVA\n- `3` 为 Movie\n- `5` 为 WEB",
-                  ),
+                  v.description("动画分类：0=其他，1=TV，2=OVA，3=Movie，5=WEB"),
                 ),
                 v.pipe(
                   v.picklist([0, 4001, 4003, 4002, 4005]),
-                  v.description(
-                    "游戏类型\n- `0` 为 其他\n- `4001` 为 游戏\n- `4002` 为 软件\n- `4003` 为 扩展包\n- `4005` 为 桌游",
-                  ),
+                  v.description("游戏分类：0=其他，4001=游戏，4002=软件，4003=扩展包，4005=桌游"),
                 ),
                 v.pipe(
                   v.picklist([0, 1, 2, 3, 6001, 6002, 6003, 6004]),
                   v.description(
-                    "电影类型\n- `0` 为 其他\n- `1` 为 日剧\n- `2` 为 欧美剧\n- `3` 为 华语剧\n- `6001` 为 电视剧\n- `6002` 为 电影\n- `6003` 为 演出\n- `6004` 为 综艺",
+                    "三次元分类：0=其他，1=日剧，2=欧美剧，3=华语剧，6001=电视剧，6002=电影，6003=演出，6004=综艺",
                   ),
                 ),
               ]),
-              v.description("条目分类，参照 `SubjectCategory` enum"),
+              v.description("条目子分类（与 type 对应）"),
             ),
           ),
           series: v.optional(
-            v.pipe(v.boolean(), v.description("是否系列，仅对书籍类型的条目有效")),
+            v.pipe(v.boolean(), v.description("是否为系列条目（仅对书籍类型有效）")),
           ),
-          platform: v.optional(v.pipe(v.string(), v.description("平台，仅对游戏类型的条目有效"))),
-          sort: v.optional(v.pipe(v.string(), v.description("排序，枚举值 {date|rank}"))),
+          platform: v.optional(v.pipe(v.string(), v.description("游戏平台（仅对游戏类型有效）"))),
+          sort: v.optional(
+            v.pipe(v.string(), v.description("排序方式：`date`（日期）或 `rank`（排名）")),
+          ),
           year: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("年份"))),
           month: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("月份"))),
           limit: v.optional(
@@ -299,11 +297,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -321,8 +319,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_by_id",
     {
-      title: "获取条目",
-      description: "获取条目\n\ncache with 300s\n\nGET /v0/subjects/{subject_id}",
+      title: "获取条目详情",
+      description: "根据条目 ID 获取条目的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -339,13 +337,16 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_image_by_id",
     {
-      title: "Get Subject Image",
-      description: "Get Subject Image\n\nGET /v0/subjects/{subject_id}/image",
+      title: "获取条目封面图",
+      description: "根据条目 ID 和尺寸类型获取条目封面图片 URL",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          type: v.pipe(v.string(), v.description("枚举值 {small|grid|large|medium|common}")),
+          type: v.pipe(
+            v.string(),
+            v.description("图片尺寸：`small`、`grid`、`large`、`medium`、`common`"),
+          ),
         }),
       ),
     },
@@ -362,8 +363,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_persons_by_subject_id",
     {
-      title: "Get Subject Persons",
-      description: "Get Subject Persons\n\nGET /v0/subjects/{subject_id}/persons",
+      title: "获取条目关联人物",
+      description: "根据条目 ID 获取参与该条目的相关人物列表（制作人员、作者等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -382,8 +383,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_characters_by_subject_id",
     {
-      title: "Get Subject Characters",
-      description: "Get Subject Characters\n\nGET /v0/subjects/{subject_id}/characters",
+      title: "获取条目关联角色",
+      description: "根据条目 ID 获取该条目登场的角色及配音列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -402,8 +403,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_subjects_by_subject_id",
     {
-      title: "Get Subject Relations",
-      description: "Get Subject Relations\n\nGET /v0/subjects/{subject_id}/subjects",
+      title: "获取关联条目",
+      description: "根据条目 ID 获取与之关联的其他条目列表（前传、续作、番外、原声集等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -422,8 +423,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episodes",
     {
-      title: "Get Episodes",
-      description: "Get Episodes\n\nGET /v0/episodes",
+      title: "获取章节列表",
+      description: "根据条目 ID 分页获取章节（剧集/曲目）列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -432,7 +433,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.pipe(
               v.picklist([0, 1, 2, 3, 4, 5, 6]),
               v.description(
-                "参照章节的`type`\n- `0`: 本篇\n- `1`: 特别篇\n- `2`: OP\n- `3`: ED\n- `4`: 预告/宣传/广告\n- `5`: MAD\n- `6`: 其他",
+                "章节类型：0=本篇，1=特别篇，2=OP，3=ED，4=预告/宣传/广告，5=MAD，6=其他",
               ),
             ),
           ),
@@ -442,11 +443,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(200),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -462,8 +463,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episode_by_id",
     {
-      title: "Get Episode",
-      description: "Get Episode\n\nGET /v0/episodes/{episode_id}",
+      title: "获取章节详情",
+      description: "根据章节 ID 获取单个章节的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -480,8 +481,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_by_id",
     {
-      title: "Get Character Detail",
-      description: "Get Character Detail\n\ncache with 60s\n\nGET /v0/characters/{character_id}",
+      title: "获取角色详情",
+      description: "根据角色 ID 获取角色的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -505,8 +506,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_image_by_id",
     {
-      title: "Get Character Image",
-      description: "Get Character Image\n\nGET /v0/characters/{character_id}/image",
+      title: "获取角色肖像图",
+      description: "根据角色 ID 和尺寸类型获取角色肖像图片 URL",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -516,7 +517,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.minValue(1),
             v.description("角色 ID"),
           ),
-          type: v.pipe(v.string(), v.description("枚举值 {small|grid|large|medium}")),
+          type: v.pipe(v.string(), v.description("图片尺寸：`small`、`grid`、`large`、`medium`")),
         }),
       ),
     },
@@ -533,8 +534,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_subjects_by_character_id",
     {
-      title: "get character related subjects",
-      description: "get character related subjects\n\nGET /v0/characters/{character_id}/subjects",
+      title: "获取角色出演条目",
+      description: "根据角色 ID 获取该角色登场的关联条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -558,8 +559,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_persons_by_character_id",
     {
-      title: "get character related persons",
-      description: "get character related persons\n\nGET /v0/characters/{character_id}/persons",
+      title: "获取角色关联人物",
+      description: "根据角色 ID 获取关联的现实人物列表（如声优、演员）",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -583,9 +584,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "collect_character_by_character_id_and_user_id",
     {
-      title: "Collect character for current user",
-      description:
-        "Collect character for current user\n\n为当前用户收藏角色\n\nPOST /v0/characters/{character_id}/collect",
+      title: "收藏角色",
+      description: "为当前登录用户收藏指定角色",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -614,9 +614,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "uncollect_character_by_character_id_and_user_id",
     {
-      title: "Uncollect character for current user",
-      description:
-        "Uncollect character for current user\n\n为当前用户取消收藏角色\n\nDELETE /v0/characters/{character_id}/collect",
+      title: "取消收藏角色",
+      description: "为当前登录用户取消收藏指定角色",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -645,8 +644,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_by_id",
     {
-      title: "Get Person",
-      description: "Get Person\n\ncache with 60s\n\nGET /v0/persons/{person_id}",
+      title: "获取人物详情",
+      description: "根据人物 ID 获取现实人物或制作团体的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -661,13 +660,13 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_image_by_id",
     {
-      title: "Get Person Image",
-      description: "Get Person Image\n\nGET /v0/persons/{person_id}/image",
+      title: "获取人物肖像图",
+      description: "根据人物 ID 和尺寸类型获取人物肖像图片 URL",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-          type: v.pipe(v.string(), v.description("枚举值 {small|grid|large|medium}")),
+          type: v.pipe(v.string(), v.description("图片尺寸：`small`、`grid`、`large`、`medium`")),
         }),
       ),
     },
@@ -684,8 +683,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_subjects_by_person_id",
     {
-      title: "get person related subjects",
-      description: "get person related subjects\n\nGET /v0/persons/{person_id}/subjects",
+      title: "获取人物参与条目",
+      description: "根据人物 ID 获取其参与制作、创作或出演的条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -704,8 +703,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_characters_by_person_id",
     {
-      title: "get person related characters",
-      description: "get person related characters\n\nGET /v0/persons/{person_id}/characters",
+      title: "获取人物配音/出演角色",
+      description: "根据人物 ID 获取其配音或扮演的虚拟角色列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -724,9 +723,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "collect_person_by_person_id_and_user_id",
     {
-      title: "Collect person for current user",
-      description:
-        "Collect person for current user\n\n为当前用户收藏人物\n\nPOST /v0/persons/{person_id}/collect",
+      title: "收藏人物",
+      description: "为当前登录用户收藏指定人物",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -750,9 +748,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "uncollect_person_by_person_id_and_user_id",
     {
-      title: "Uncollect person for current user",
-      description:
-        "Uncollect person for current user\n\n为当前用户取消收藏人物\n\nDELETE /v0/persons/{person_id}/collect",
+      title: "取消收藏人物",
+      description: "为当前登录用户取消收藏指定人物",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -776,12 +773,15 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_by_name",
     {
-      title: "Get User by name",
-      description: "Get User by name\n\n获取用户信息\n\nGET /v0/users/{username}",
+      title: "获取用户信息",
+      description: "根据用户名获取用户的公开个人资料",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
         }),
       ),
     },
@@ -792,14 +792,16 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_avatar_by_name",
     {
-      title: "Get User Avatar by name",
-      description:
-        "Get User Avatar by name\n\n获取用户头像，302 重定向至头像地址，设置了 username 之后无法使用 UID 查询。\n\nGET /v0/users/{username}/avatar",
+      title: "获取用户头像",
+      description: "根据用户名和尺寸类型获取用户头像图片 URL",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
-          type: v.pipe(v.string(), v.description("枚举值 {small|large|medium}")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
+          type: v.pipe(v.string(), v.description("头像尺寸：`small`、`large`、`medium`")),
         }),
       ),
     },
@@ -816,8 +818,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_me",
     {
-      title: "Get User",
-      description: "Get User\n\n返回当前 Access Token 对应的用户信息\n\nGET /v0/me",
+      title: "获取当前登录用户信息",
+      description: "获取当前授权登录用户的个人信息（包括 username、UID、昵称等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     () => toToolResult(client.api.GET("/v0/me")),
@@ -826,25 +828,25 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_collections_by_username",
     {
-      title: "获取用户收藏",
-      description:
-        "获取用户收藏\n\n获取对应用户的收藏，查看私有收藏需要access token。\n\nGET /v0/users/{username}/collections",
+      title: "获取用户条目收藏列表",
+      description: "分页获取指定用户的条目收藏列表（私有收藏仅本人可见）",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
           subject_type: v.optional(
             v.pipe(
               v.picklist([1, 2, 3, 4, 6]),
-              v.description("条目类型，默认为全部\n\n具体含义见 [SubjectType](#model-SubjectType)"),
+              v.description("条目类型筛选（默认全部）：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
             ),
           ),
           type: v.optional(
             v.pipe(
               v.picklist([1, 2, 3, 4, 5]),
-              v.description(
-                "收藏类型，默认为全部\n- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
-              ),
+              v.description("收藏状态筛选（默认全部）：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
             ),
           ),
           limit: v.optional(
@@ -853,11 +855,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -874,12 +876,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_user_collection",
     {
       title: "获取用户单个条目收藏",
-      description:
-        "获取用户单个条目收藏\n\n获取对应用户的收藏，查看私有收藏需要 access token\n\nGET /v0/users/{username}/collections/{subject_id}",
+      description: "获取指定用户对单个条目的收藏状态、评分及评论（私有收藏仅本人可见）",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
         }),
       ),
@@ -895,9 +899,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "post_user_collection",
     {
-      title: "新增或修改用户单个条目收藏",
+      title: "新增或修改条目收藏",
       description:
-        "新增或修改用户单个条目收藏\n\n修改条目收藏状态, 如果不存在则创建，如果存在则修改\n\n由于直接修改剧集条目的完成度可能会引起意料之外效果，只能用于修改书籍类条目的完成度。\n\n方法的所有请求体字段均可选\n\nPOST /v0/users/-/collections/{subject_id}\n\n请求体通过 body 参数传入。",
+        "为当前登录用户新增或更新单个条目的收藏状态、评分、标签及评价（若未收藏则创建，已收藏则更新；ep_status 与 vol_status 仅适用于书籍类条目）",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -913,9 +917,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                 type: v.optional(
                   v.pipe(
                     v.picklist([1, 2, 3, 4, 5]),
-                    v.description(
-                      "修改条目收藏类型\n- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
-                    ),
+                    v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
                   ),
                 ),
                 rate: v.optional(
@@ -924,7 +926,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                     v.safeInteger(),
                     v.minValue(0),
                     v.maxValue(10),
-                    v.description("评分，`0` 表示删除评分"),
+                    v.description("评分（1-10，`0` 表示删除评分）"),
                   ),
                 ),
                 ep_status: v.optional(
@@ -932,7 +934,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                     v.number(),
                     v.safeInteger(),
                     v.minValue(0),
-                    v.description("只能用于修改书籍条目进度"),
+                    v.description("看到的话数进度（仅适用于书籍类条目）"),
                   ),
                 ),
                 vol_status: v.optional(
@@ -940,19 +942,19 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                     v.number(),
                     v.safeInteger(),
                     v.minValue(0),
-                    v.description("只能用于修改书籍条目进度"),
+                    v.description("看到的卷数进度（仅适用于书籍类条目）"),
                   ),
                 ),
-                comment: v.optional(v.pipe(v.string(), v.description("评价"))),
-                private: v.optional(v.pipe(v.boolean(), v.description("仅自己可见"))),
+                comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
+                private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
                 tags: v.optional(
                   v.pipe(
-                    v.array(v.pipe(v.string(), v.description("不能包含空格"))),
-                    v.description("不传或者 `null` 都会被忽略，传 `[]` 则会删除所有 tag。"),
+                    v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
+                    v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
                   ),
                 ),
               }),
-              v.description("所有的字段均可选"),
+              v.description("要设置或更新的收藏字段（所有字段均可选）"),
             ),
           ),
         }),
@@ -970,9 +972,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "patch_user_collection",
     {
-      title: "修改用户单个收藏",
+      title: "更新条目收藏",
       description:
-        "修改用户单个收藏\n\n修改条目收藏状态\n\n由于直接修改剧集条目的完成度可能会引起意料之外效果，只能用于修改书籍类条目的完成度。\n\nPATCH 方法的所有请求体字段均可选\n\nPATCH /v0/users/-/collections/{subject_id}\n\n请求体通过 body 参数传入。",
+        "更新当前登录用户对已收藏条目的状态、评分、标签或评价（ep_status 与 vol_status 仅适用于书籍类条目）",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -988,9 +990,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                 type: v.optional(
                   v.pipe(
                     v.picklist([1, 2, 3, 4, 5]),
-                    v.description(
-                      "修改条目收藏类型\n- `1`: 想看\n- `2`: 看过\n- `3`: 在看\n- `4`: 搁置\n- `5`: 抛弃",
-                    ),
+                    v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
                   ),
                 ),
                 rate: v.optional(
@@ -999,7 +999,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                     v.safeInteger(),
                     v.minValue(0),
                     v.maxValue(10),
-                    v.description("评分，`0` 表示删除评分"),
+                    v.description("评分（1-10，`0` 表示删除评分）"),
                   ),
                 ),
                 ep_status: v.optional(
@@ -1007,7 +1007,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                     v.number(),
                     v.safeInteger(),
                     v.minValue(0),
-                    v.description("只能用于修改书籍条目进度"),
+                    v.description("看到的话数进度（仅适用于书籍类条目）"),
                   ),
                 ),
                 vol_status: v.optional(
@@ -1015,19 +1015,19 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
                     v.number(),
                     v.safeInteger(),
                     v.minValue(0),
-                    v.description("只能用于修改书籍条目进度"),
+                    v.description("看到的卷数进度（仅适用于书籍类条目）"),
                   ),
                 ),
-                comment: v.optional(v.pipe(v.string(), v.description("评价"))),
-                private: v.optional(v.pipe(v.boolean(), v.description("仅自己可见"))),
+                comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
+                private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
                 tags: v.optional(
                   v.pipe(
-                    v.array(v.pipe(v.string(), v.description("不能包含空格"))),
-                    v.description("不传或者 `null` 都会被忽略，传 `[]` 则会删除所有 tag。"),
+                    v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
+                    v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
                   ),
                 ),
               }),
-              v.description("所有的字段均可选"),
+              v.description("要更新的收藏字段（所有字段均可选）"),
             ),
           ),
         }),
@@ -1045,14 +1045,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_subject_episode_collection",
     {
-      title: "章节收藏信息",
-      description: "章节收藏信息\n\nGET /v0/users/-/collections/{subject_id}/episodes",
+      title: "获取条目章节收藏状态",
+      description: "分页获取当前登录用户在指定条目下的各章节（剧集）收藏状态",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
           limit: v.optional(
             v.pipe(
@@ -1060,13 +1060,15 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(1000),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           episode_type: v.optional(
             v.pipe(
               v.picklist([0, 1, 2, 3, 4, 5, 6]),
-              v.description("章节类型，不传则不按照章节进行筛选"),
+              v.description(
+                "章节类型筛选（不传则不过滤）：0=本篇，1=特别篇，2=OP，3=ED，4=预告/宣传/广告，5=MAD，6=其他",
+              ),
             ),
           ),
         }),
@@ -1083,9 +1085,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "patch_user_subject_episode_collection",
     {
-      title: "章节收藏信息",
+      title: "批量更新条目章节收藏状态",
       description:
-        "章节收藏信息\n\n同时会重新计算条目的完成度\n\nPATCH /v0/users/-/collections/{subject_id}/episodes\n\n请求体通过 body 参数传入。",
+        "批量更新当前登录用户在指定条目下多个章节的观看状态，并自动重新计算条目的完成进度",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1097,10 +1099,13 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
           body: v.optional(
             v.object({
-              episode_id: v.array(v.pipe(v.number(), v.safeInteger())),
+              episode_id: v.pipe(
+                v.array(v.pipe(v.number(), v.safeInteger())),
+                v.description("要更新的章节 ID 列表"),
+              ),
               type: v.pipe(
                 v.picklist([0, 1, 2, 3]),
-                v.description("- `0`: 未收藏\n- `1`: 想看\n- `2`: 看过\n- `3`: 抛弃"),
+                v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
               ),
             }),
           ),
@@ -1119,8 +1124,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_episode_collection",
     {
-      title: "章节收藏信息",
-      description: "章节收藏信息\n\nGET /v0/users/-/collections/-/episodes/{episode_id}",
+      title: "获取单个章节收藏状态",
+      description: "获取当前登录用户对指定章节的观看/收藏状态",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -1139,9 +1144,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "put_user_episode_collection",
     {
-      title: "更新章节收藏信息",
-      description:
-        "更新章节收藏信息\n\nPUT /v0/users/-/collections/-/episodes/{episode_id}\n\n请求体通过 body 参数传入。",
+      title: "更新单个章节收藏状态",
+      description: "更新当前登录用户对指定章节的观看/收藏状态",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1155,7 +1159,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.object({
               type: v.pipe(
                 v.picklist([0, 1, 2, 3]),
-                v.description("- `0`: 未收藏\n- `1`: 想看\n- `2`: 看过\n- `3`: 抛弃"),
+                v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
               ),
             }),
           ),
@@ -1175,11 +1179,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_user_character_collections",
     {
       title: "获取用户角色收藏列表",
-      description: "获取用户角色收藏列表\n\nGET /v0/users/{username}/collections/-/characters",
+      description: "获取指定用户收藏的角色列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
         }),
       ),
     },
@@ -1195,12 +1202,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_user_character_collection",
     {
       title: "获取用户单个角色收藏信息",
-      description:
-        "获取用户单个角色收藏信息\n\nGET /v0/users/{username}/collections/-/characters/{character_id}",
+      description: "获取指定用户对单个角色的收藏信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
           character_id: v.pipe(
             v.number(),
             v.safeInteger(),
@@ -1222,11 +1231,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_user_person_collections",
     {
       title: "获取用户人物收藏列表",
-      description: "获取用户人物收藏列表\n\nGET /v0/users/{username}/collections/-/persons",
+      description: "获取指定用户收藏的现实人物列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
         }),
       ),
     },
@@ -1242,12 +1254,14 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
     "get_user_person_collection",
     {
       title: "获取用户单个人物收藏信息",
-      description:
-        "获取用户单个人物收藏信息\n\nGET /v0/users/{username}/collections/-/persons/{person_id}",
+      description: "获取指定用户对单个人物的收藏信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          username: v.pipe(v.string(), v.description("设置了用户名之后无法使用 UID。")),
+          username: v.pipe(
+            v.string(),
+            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+          ),
           person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
         }),
       ),
@@ -1263,23 +1277,23 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_revisions",
     {
-      title: "Get Person Revisions",
-      description: "Get Person Revisions\n\nGET /v0/revisions/persons",
+      title: "获取人物历史修订列表",
+      description: "根据人物 ID 分页获取该人物词条的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
           limit: v.optional(
             v.pipe(
               v.number(),
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -1295,8 +1309,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_revision_by_revision_id",
     {
-      title: "Get Person Revision",
-      description: "Get Person Revision\n\nGET /v0/revisions/persons/{revision_id}",
+      title: "获取人物历史修订详情",
+      description: "根据修订版本 ID 获取人物词条单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -1304,7 +1318,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.number(),
             v.safeInteger(),
             v.minValue(1),
-            v.description("历史版本 ID"),
+            v.description("历史修订版本 ID"),
           ),
         }),
       ),
@@ -1320,8 +1334,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_revisions",
     {
-      title: "Get Character Revisions",
-      description: "Get Character Revisions\n\nGET /v0/revisions/characters",
+      title: "获取角色历史修订列表",
+      description: "根据角色 ID 分页获取该角色词条的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -1337,11 +1351,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -1357,12 +1371,17 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_revision_by_revision_id",
     {
-      title: "Get Character Revision",
-      description: "Get Character Revision\n\nGET /v0/revisions/characters/{revision_id}",
+      title: "获取角色历史修订详情",
+      description: "根据修订版本 ID 获取角色词条单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          revision_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("版本 ID")),
+          revision_id: v.pipe(
+            v.number(),
+            v.safeInteger(),
+            v.minValue(1),
+            v.description("历史修订版本 ID"),
+          ),
         }),
       ),
     },
@@ -1377,8 +1396,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_revisions",
     {
-      title: "Get Subject Revisions",
-      description: "Get Subject Revisions\n\nGET /v0/revisions/subjects",
+      title: "获取条目历史修订列表",
+      description: "根据条目 ID 分页获取该条目词条的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -1389,11 +1408,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -1409,12 +1428,17 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_revision_by_revision_id",
     {
-      title: "Get Subject Revision",
-      description: "Get Subject Revision\n\nGET /v0/revisions/subjects/{revision_id}",
+      title: "获取条目历史修订详情",
+      description: "根据修订版本 ID 获取条目词条单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          revision_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("版本 ID")),
+          revision_id: v.pipe(
+            v.number(),
+            v.safeInteger(),
+            v.minValue(1),
+            v.description("历史修订版本 ID"),
+          ),
         }),
       ),
     },
@@ -1429,8 +1453,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episode_revisions",
     {
-      title: "Get Episode Revisions",
-      description: "Get Episode Revisions\n\nGET /v0/revisions/episodes",
+      title: "获取章节历史修订列表",
+      description: "根据章节 ID 分页获取该章节的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -1441,11 +1465,11 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -1461,12 +1485,17 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episode_revision_by_revision_id",
     {
-      title: "Get Episode Revision",
-      description: "Get Episode Revision\n\nGET /v0/revisions/episodes/{revision_id}",
+      title: "获取章节历史修订详情",
+      description: "根据修订版本 ID 获取章节单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
-          revision_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("版本 ID")),
+          revision_id: v.pipe(
+            v.number(),
+            v.safeInteger(),
+            v.minValue(1),
+            v.description("历史修订版本 ID"),
+          ),
         }),
       ),
     },
@@ -1481,8 +1510,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "new_index",
     {
-      title: "Create a new index",
-      description: "Create a new index\n\nPOST /v0/indices",
+      title: "创建目录",
+      description: "为当前登录用户创建一个新目录",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -1496,8 +1525,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_index_by_id",
     {
-      title: "Get Index By ID",
-      description: "Get Index By ID\n\nGET /v0/indices/{index_id}",
+      title: "获取目录详情",
+      description: "根据目录 ID 获取目录的基本信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
@@ -1512,9 +1541,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "edit_index_by_id",
     {
-      title: "Edit index's information",
-      description:
-        "Edit index's information\n\nPUT /v0/indices/{index_id}\n\n请求体通过 body 参数传入。",
+      title: "编辑目录信息",
+      description: "修改指定目录的标题和描述",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1527,12 +1555,10 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           body: v.optional(
             v.pipe(
               v.object({
-                title: v.optional(v.string()),
-                description: v.optional(v.string()),
+                title: v.optional(v.pipe(v.string(), v.description("目录标题"))),
+                description: v.optional(v.pipe(v.string(), v.description("目录描述"))),
               }),
-              v.description(
-                '新增或修改条目的内容，同名字段意义同<a href="#model-Subject">Subject</a>',
-              ),
+              v.description("要修改的目录标题与描述"),
             ),
           ),
         }),
@@ -1547,24 +1573,29 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_index_subjects_by_index_id",
     {
-      title: "Get Index Subjects",
-      description: "Get Index Subjects\n\nGET /v0/indices/{index_id}/subjects",
+      title: "获取目录条目列表",
+      description: "根据目录 ID 分页获取该目录中收录的条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: toStandardJsonSchema(
         v.object({
           index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          type: v.optional(v.pipe(v.picklist([1, 2, 3, 4, 6]), v.description("条目类型"))),
+          type: v.optional(
+            v.pipe(
+              v.picklist([1, 2, 3, 4, 6]),
+              v.description("条目类型筛选：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
+            ),
+          ),
           limit: v.optional(
             v.pipe(
               v.number(),
               v.safeInteger(),
               v.minValue(1),
               v.maxValue(50),
-              v.description("分页参数"),
+              v.description("分页大小"),
             ),
           ),
           offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页参数")),
+            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
           ),
         }),
       ),
@@ -1580,9 +1611,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "add_subject_to_index_by_index_id",
     {
-      title: "Add a subject to Index",
-      description:
-        "Add a subject to Index\n\nPOST /v0/indices/{index_id}/subjects\n\n请求体通过 body 参数传入。",
+      title: "向目录添加条目",
+      description: "向指定目录中添加一个条目",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -1595,13 +1625,15 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
           body: v.optional(
             v.pipe(
               v.object({
-                subject_id: v.optional(v.pipe(v.number(), v.safeInteger())),
-                sort: v.optional(
-                  v.pipe(v.number(), v.safeInteger(), v.description("排序条件，越小越靠前")),
+                subject_id: v.optional(
+                  v.pipe(v.number(), v.safeInteger(), v.description("要添加的条目 ID")),
                 ),
-                comment: v.optional(v.string()),
+                sort: v.optional(
+                  v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
+                ),
+                comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
               }),
-              v.description("新增某条目到目录的请求信息"),
+              v.description("新增条目到目录的请求信息"),
             ),
           ),
         }),
@@ -1619,9 +1651,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "edit_index_subjects_by_index_id_and_subject_id",
     {
-      title: "Edit subject information in a index",
-      description:
-        "Edit subject information in a index\n\n如果条目不存在于目录，会创建该条目\n\nPUT /v0/indices/{index_id}/subjects/{subject_id}\n\n请求体通过 body 参数传入。",
+      title: "修改目录中的条目信息",
+      description: "修改目录中指定条目的排序权重或备注（若条目不存在于目录中则会创建）",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1636,9 +1667,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
             v.pipe(
               v.object({
                 sort: v.optional(
-                  v.pipe(v.number(), v.safeInteger(), v.description("排序条件，越小越靠前")),
+                  v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
                 ),
-                comment: v.optional(v.string()),
+                comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
               }),
               v.description("修改目录中条目的信息"),
             ),
@@ -1658,9 +1689,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "delete_subject_from_index_by_index_id_and_subject_id",
     {
-      title: "Delete a subject from a Index",
-      description:
-        "Delete a subject from a Index\n\nDELETE /v0/indices/{index_id}/subjects/{subject_id}",
+      title: "从目录移除条目",
+      description: "从指定目录中删除某个条目",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1685,9 +1715,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "collect_index_by_index_id_and_user_id",
     {
-      title: "Collect index for current user",
-      description:
-        "Collect index for current user\n\n为当前用户收藏一条目录\n\nPOST /v0/indices/{index_id}/collect",
+      title: "收藏目录",
+      description: "为当前登录用户收藏指定目录",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -1711,9 +1740,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "uncollect_index_by_index_id_and_user_id",
     {
-      title: "Uncollect index for current user",
-      description:
-        "Uncollect index for current user\n\n为当前用户取消收藏一条目录\n\nDELETE /v0/indices/{index_id}/collect",
+      title: "取消收藏目录",
+      description: "为当前登录用户取消收藏指定目录",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
