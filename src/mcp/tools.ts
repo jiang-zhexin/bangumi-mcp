@@ -1,4 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/server";
+import type { CallToolResult, ContentBlock, McpServer } from "@modelcontextprotocol/server";
 import { toStandardJsonSchema } from "@valibot/to-json-schema";
 import * as v from "valibot";
 
@@ -16,7 +16,7 @@ function apiError({ error, response }: ApiResult<unknown>): Error {
   );
 }
 
-function toJsonResult<T>(result: ApiResult<T>) {
+function toJsonResult<T>(result: ApiResult<T>): CallToolResult {
   if (!result.response.ok) throw apiError(result);
 
   const { data } = result;
@@ -28,7 +28,7 @@ function toJsonResult<T>(result: ApiResult<T>) {
         : { data };
 
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(structuredContent) }],
+    content: [{ type: "text", text: JSON.stringify(structuredContent) }],
     structuredContent,
   };
 }
@@ -44,21 +44,19 @@ async function fetchInlineImage(url: string) {
   return { data: bytes.toBase64(), mimeType };
 }
 
-async function toImageResult(result: ApiResult<unknown>) {
+async function toImageResult(result: ApiResult<unknown>): Promise<CallToolResult> {
   const { response } = result;
   const location = response.status === 302 ? response.headers.get("Location") : null;
   if (!location) throw apiError(result);
 
   const url = new URL(location, response.url).href;
-  const image = await fetchInlineImage(url).catch();
+  const image = await fetchInlineImage(url).catch(() => undefined);
   const structuredContent = image ? { url, mimeType: image.mimeType } : { url };
-  return {
-    content: [
-      ...(image ? [{ type: "image" as const, ...image }] : []),
-      { type: "text" as const, text: JSON.stringify(structuredContent) },
-    ],
-    structuredContent,
-  };
+
+  const content: ContentBlock[] = [{ type: "text", text: JSON.stringify(structuredContent) }];
+  if (image) content.unshift({ type: "image", ...image });
+
+  return { content, structuredContent };
 }
 
 export function registerApiTools(server: McpServer, client: BangumiClient): void {
