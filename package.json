@@ -1,0 +1,30 @@
+{
+  "name": "bangumi-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "fmt": "oxfmt",
+    "gen:api": "openapi-typescript",
+    "gen:cf-type": "wrangler types",
+    "lint": "oxlint",
+    "type-check": "tsc"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.2.4",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "@valibot/to-json-schema": "^1.8.0",
+    "hono": "^4.13.17",
+    "openapi-fetch": "^0.17.0",
+    "valibot": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "openapi-typescript": "7.13.0",
+    "oxfmt": "^0.77.0",
+    "oxlint": "^1.92.0",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.158.0"
+  }
+}

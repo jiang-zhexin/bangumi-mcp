@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bangumi-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": false,
+  "minify": true,
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+  },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+    },
+  ],
+}
