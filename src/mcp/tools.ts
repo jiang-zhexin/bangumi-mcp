@@ -1,8 +1,8 @@
 import type { CallToolResult, ContentBlock, McpServer } from "@modelcontextprotocol/server";
-import { toStandardJsonSchema } from "@valibot/to-json-schema";
-import * as v from "valibot";
 
 import { type BangumiClient, DEFAULT_BGM_USER_AGENT } from "@/bangumi";
+
+import * as schemas from "./schemas";
 
 interface ApiResult<T> {
   data?: T;
@@ -73,77 +73,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "每日放送",
       description: "获取每周每日放送的番剧时间表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              weekday: v.optional(
-                v.object({
-                  en: v.optional(v.string()),
-                  cn: v.optional(v.string()),
-                  ja: v.optional(v.string()),
-                  id: v.optional(v.number()),
-                }),
-              ),
-              items: v.optional(
-                v.array(
-                  v.object({
-                    id: v.optional(v.number()),
-                    url: v.optional(v.string()),
-                    type: v.optional(v.picklist([1, 2, 3, 4, 6])),
-                    name: v.optional(v.string()),
-                    name_cn: v.optional(v.string()),
-                    summary: v.optional(v.string()),
-                    air_date: v.optional(v.string()),
-                    air_weekday: v.optional(v.number()),
-                    images: v.optional(
-                      v.object({
-                        large: v.optional(v.string()),
-                        common: v.optional(v.string()),
-                        medium: v.optional(v.string()),
-                        small: v.optional(v.string()),
-                        grid: v.optional(v.string()),
-                      }),
-                    ),
-                    eps: v.optional(v.number()),
-                    eps_count: v.optional(v.number()),
-                    rating: v.optional(
-                      v.object({
-                        total: v.optional(v.number()),
-                        score: v.optional(v.number()),
-                        count: v.optional(
-                          v.object({
-                            "1": v.optional(v.number()),
-                            "2": v.optional(v.number()),
-                            "3": v.optional(v.number()),
-                            "4": v.optional(v.number()),
-                            "5": v.optional(v.number()),
-                            "6": v.optional(v.number()),
-                            "7": v.optional(v.number()),
-                            "8": v.optional(v.number()),
-                            "9": v.optional(v.number()),
-                            "10": v.optional(v.number()),
-                          }),
-                        ),
-                      }),
-                    ),
-                    rank: v.optional(v.number()),
-                    collection: v.optional(
-                      v.object({
-                        wish: v.optional(v.number()),
-                        collect: v.optional(v.number()),
-                        doing: v.optional(v.number()),
-                        on_hold: v.optional(v.number()),
-                        dropped: v.optional(v.number()),
-                      }),
-                    ),
-                  }),
-                ),
-              ),
-            }),
-          ),
-        }),
-      ),
+      outputSchema: schemas.getCalendarOutputSchema,
     },
     () => client.api.GET("/calendar").then(toJsonResult),
   );
@@ -155,162 +85,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       description:
         "根据关键词和过滤条件搜索条目（书籍、动画、音乐、游戏、三次元）。不同筛选条件之间为「且」关系。",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
-          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-          keyword: v.pipe(v.string(), v.description("搜索关键词")),
-          sort: v.optional(
-            v.pipe(
-              v.picklist(["match", "heat", "rank", "score"]),
-              v.description(
-                "排序规则：\n- `match`: 默认排序，按匹配程度\n- `heat`: 按收藏人数\n- `rank`: 按排名由高到低\n- `score`: 按评分",
-              ),
-            ),
-          ),
-          filter: v.optional(
-            v.pipe(
-              v.object({
-                type: v.optional(
-                  v.pipe(
-                    v.array(
-                      v.pipe(
-                        v.picklist([1, 2, 3, 4, 6]),
-                        v.description("条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元（无 5）"),
-                      ),
-                    ),
-                    v.description(
-                      "条目类型列表（1=书籍，2=动画，3=音乐，4=游戏，6=三次元），多值之间为「或」关系",
-                    ),
-                  ),
-                ),
-                meta_tags: v.optional(
-                  v.pipe(
-                    v.array(v.string()),
-                    v.description(
-                      "公共标签列表，多值之间为「且」关系。可用 `-` 前缀排除标签，例如 `-科幻`",
-                    ),
-                  ),
-                ),
-                tag: v.optional(
-                  v.pipe(v.array(v.string()), v.description("标签列表，多值之间为「且」关系")),
-                ),
-                air_date: v.optional(
-                  v.pipe(
-                    v.array(v.string()),
-                    v.description(
-                      "播出/发售日期过滤条件（格式 `YYYY-MM-DD`，支持比较前缀如 `>=2020-07-01`、`<2020-10-01`），多值之间为「且」关系",
-                    ),
-                  ),
-                ),
-                rating: v.optional(
-                  v.pipe(
-                    v.array(v.string()),
-                    v.description(
-                      "评分过滤条件（支持比较前缀如 `>=6`、`<=8`），多值之间为「且」关系",
-                    ),
-                  ),
-                ),
-                rating_count: v.optional(
-                  v.pipe(
-                    v.array(v.string()),
-                    v.description(
-                      "评分人数过滤条件（支持比较前缀如 `>=200`、`<=5000`），多值之间为「且」关系",
-                    ),
-                  ),
-                ),
-                rank: v.optional(
-                  v.pipe(
-                    v.array(v.string()),
-                    v.description(
-                      "排名过滤条件（支持比较前缀如 `>100`、`<=200`），多值之间为「且」关系",
-                    ),
-                  ),
-                ),
-                nsfw: v.optional(
-                  v.pipe(
-                    v.boolean(),
-                    v.description(
-                      "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 条目；`false` 仅返回非 R18 条目（无权限用户忽略此字段，不会返回 R18）",
-                    ),
-                  ),
-                ),
-              }),
-              v.description("过滤条件，不同字段之间为「且」关系"),
-            ),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.picklist([1, 2, 3, 4, 6]),
-              name: v.string(),
-              name_cn: v.string(),
-              summary: v.string(),
-              series: v.boolean(),
-              nsfw: v.boolean(),
-              locked: v.boolean(),
-              date: v.optional(v.string()),
-              platform: v.string(),
-              images: v.object({
-                large: v.string(),
-                common: v.string(),
-                medium: v.string(),
-                small: v.string(),
-                grid: v.string(),
-              }),
-              infobox: v.optional(
-                v.array(
-                  v.object({
-                    key: v.string(),
-                    value: v.union([
-                      v.string(),
-                      v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
-                    ]),
-                  }),
-                ),
-              ),
-              volumes: v.number(),
-              eps: v.number(),
-              total_episodes: v.number(),
-              rating: v.object({
-                rank: v.number(),
-                total: v.number(),
-                score: v.number(),
-                count: v.object({
-                  "1": v.optional(v.number()),
-                  "2": v.optional(v.number()),
-                  "3": v.optional(v.number()),
-                  "4": v.optional(v.number()),
-                  "5": v.optional(v.number()),
-                  "6": v.optional(v.number()),
-                  "7": v.optional(v.number()),
-                  "8": v.optional(v.number()),
-                  "9": v.optional(v.number()),
-                  "10": v.optional(v.number()),
-                }),
-              }),
-              collection: v.object({
-                wish: v.number(),
-                collect: v.number(),
-                doing: v.number(),
-                on_hold: v.number(),
-                dropped: v.number(),
-              }),
-              meta_tags: v.array(v.string()),
-              tags: v.array(
-                v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
-              ),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.searchSubjectsInputSchema,
+      outputSchema: schemas.searchSubjectsOutputSchema,
     },
     ({ limit, offset, keyword, sort, filter }) =>
       client.api
@@ -327,59 +103,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "角色搜索",
       description: "根据关键词搜索虚拟角色",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
-          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-          keyword: v.pipe(v.string(), v.description("搜索关键词")),
-          filter: v.optional(
-            v.pipe(
-              v.object({
-                nsfw: v.optional(
-                  v.pipe(
-                    v.boolean(),
-                    v.description(
-                      "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 角色；`false` 仅返回非 R18 角色（无权限用户忽略此字段，不会返回 R18）",
-                    ),
-                  ),
-                ),
-              }),
-              v.description("过滤条件，不同字段之间为「且」关系"),
-            ),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3, 4]),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              summary: v.string(),
-              locked: v.boolean(),
-              infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
-              gender: v.optional(v.string()),
-              blood_type: v.optional(v.picklist([1, 2, 3, 4])),
-              birth_year: v.optional(v.number()),
-              birth_mon: v.optional(v.number()),
-              birth_day: v.optional(v.number()),
-              stat: v.object({ comments: v.number(), collects: v.number() }),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.searchCharactersInputSchema,
+      outputSchema: schemas.searchCharactersOutputSchema,
     },
     ({ limit, offset, keyword, filter }) =>
       client.api
@@ -396,71 +121,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "人物搜索",
       description: "根据关键词和职业搜索现实人物或制作团体（声优、作者、监督、制作公司等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
-          offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-          keyword: v.pipe(v.string(), v.description("搜索关键词")),
-          filter: v.optional(
-            v.pipe(
-              v.object({
-                career: v.optional(
-                  v.pipe(
-                    v.array(
-                      v.picklist([
-                        "producer",
-                        "mangaka",
-                        "artist",
-                        "seiyu",
-                        "writer",
-                        "illustrator",
-                        "actor",
-                      ]),
-                    ),
-                    v.description("职业过滤列表，多值之间为「且」关系"),
-                  ),
-                ),
-              }),
-              v.description("过滤条件，不同字段之间为「且」关系"),
-            ),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3]),
-              career: v.array(
-                v.picklist([
-                  "producer",
-                  "mangaka",
-                  "artist",
-                  "seiyu",
-                  "writer",
-                  "illustrator",
-                  "actor",
-                ]),
-              ),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              short_summary: v.string(),
-              locked: v.boolean(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.searchPersonsInputSchema,
+      outputSchema: schemas.searchPersonsOutputSchema,
     },
     ({ limit, offset, keyword, filter }) =>
       client.api
@@ -477,128 +139,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "浏览条目",
       description: "按条目类型、子分类、年份、月份等条件分页浏览条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          type: v.pipe(
-            v.picklist([1, 2, 3, 4, 6]),
-            v.description("条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
-          ),
-          cat: v.optional(
-            v.pipe(
-              v.union([
-                v.pipe(
-                  v.picklist([0, 1001, 1002, 1003]),
-                  v.description("书籍分类：0=其他，1001=漫画，1002=小说，1003=画集"),
-                ),
-                v.pipe(
-                  v.picklist([0, 1, 2, 3, 5]),
-                  v.description("动画分类：0=其他，1=TV，2=OVA，3=Movie，5=WEB"),
-                ),
-                v.pipe(
-                  v.picklist([0, 4001, 4003, 4002, 4005]),
-                  v.description("游戏分类：0=其他，4001=游戏，4002=软件，4003=扩展包，4005=桌游"),
-                ),
-                v.pipe(
-                  v.picklist([0, 1, 2, 3, 6001, 6002, 6003, 6004]),
-                  v.description(
-                    "三次元分类：0=其他，1=日剧，2=欧美剧，3=华语剧，6001=电视剧，6002=电影，6003=演出，6004=综艺",
-                  ),
-                ),
-              ]),
-              v.description("条目子分类（与 type 对应）"),
-            ),
-          ),
-          series: v.optional(
-            v.pipe(v.boolean(), v.description("是否为系列条目（仅对书籍类型有效）")),
-          ),
-          platform: v.optional(v.pipe(v.string(), v.description("游戏平台（仅对游戏类型有效）"))),
-          sort: v.optional(v.pipe(v.picklist(["date", "rank"]), v.description("排序方式"))),
-          year: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("年份"))),
-          month: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("月份"))),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.picklist([1, 2, 3, 4, 6]),
-              name: v.string(),
-              name_cn: v.string(),
-              summary: v.string(),
-              series: v.boolean(),
-              nsfw: v.boolean(),
-              locked: v.boolean(),
-              date: v.optional(v.string()),
-              platform: v.string(),
-              images: v.object({
-                large: v.string(),
-                common: v.string(),
-                medium: v.string(),
-                small: v.string(),
-                grid: v.string(),
-              }),
-              infobox: v.optional(
-                v.array(
-                  v.object({
-                    key: v.string(),
-                    value: v.union([
-                      v.string(),
-                      v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
-                    ]),
-                  }),
-                ),
-              ),
-              volumes: v.number(),
-              eps: v.number(),
-              total_episodes: v.number(),
-              rating: v.object({
-                rank: v.number(),
-                total: v.number(),
-                score: v.number(),
-                count: v.object({
-                  "1": v.optional(v.number()),
-                  "2": v.optional(v.number()),
-                  "3": v.optional(v.number()),
-                  "4": v.optional(v.number()),
-                  "5": v.optional(v.number()),
-                  "6": v.optional(v.number()),
-                  "7": v.optional(v.number()),
-                  "8": v.optional(v.number()),
-                  "9": v.optional(v.number()),
-                  "10": v.optional(v.number()),
-                }),
-              }),
-              collection: v.object({
-                wish: v.number(),
-                collect: v.number(),
-                doing: v.number(),
-                on_hold: v.number(),
-                dropped: v.number(),
-              }),
-              meta_tags: v.array(v.string()),
-              tags: v.array(
-                v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
-              ),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getSubjectsInputSchema,
+      outputSchema: schemas.getSubjectsOutputSchema,
     },
     ({ type, cat, series, platform, sort, year, month, limit, offset }) =>
       client.api
@@ -616,72 +158,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目详情",
       description: "根据条目 ID 获取条目的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          type: v.picklist([1, 2, 3, 4, 6]),
-          name: v.string(),
-          name_cn: v.string(),
-          summary: v.string(),
-          series: v.boolean(),
-          nsfw: v.boolean(),
-          locked: v.boolean(),
-          date: v.optional(v.string()),
-          platform: v.string(),
-          images: v.object({
-            large: v.string(),
-            common: v.string(),
-            medium: v.string(),
-            small: v.string(),
-            grid: v.string(),
-          }),
-          infobox: v.optional(
-            v.array(
-              v.object({
-                key: v.string(),
-                value: v.union([
-                  v.string(),
-                  v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
-                ]),
-              }),
-            ),
-          ),
-          volumes: v.number(),
-          eps: v.number(),
-          total_episodes: v.number(),
-          rating: v.object({
-            rank: v.number(),
-            total: v.number(),
-            score: v.number(),
-            count: v.object({
-              "1": v.optional(v.number()),
-              "2": v.optional(v.number()),
-              "3": v.optional(v.number()),
-              "4": v.optional(v.number()),
-              "5": v.optional(v.number()),
-              "6": v.optional(v.number()),
-              "7": v.optional(v.number()),
-              "8": v.optional(v.number()),
-              "9": v.optional(v.number()),
-              "10": v.optional(v.number()),
-            }),
-          }),
-          collection: v.object({
-            wish: v.number(),
-            collect: v.number(),
-            doing: v.number(),
-            on_hold: v.number(),
-            dropped: v.number(),
-          }),
-          meta_tags: v.array(v.string()),
-          tags: v.array(v.object({ name: v.string(), count: v.number(), total_count: v.number() })),
-        }),
-      ),
+      inputSchema: schemas.getSubjectByIdInputSchema,
+      outputSchema: schemas.getSubjectByIdOutputSchema,
     },
     ({ subject_id }) =>
       client.api
@@ -695,18 +173,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目封面图",
       description: "根据条目 ID 和尺寸类型获取条目封面图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          type: v.pipe(
-            v.picklist(["small", "grid", "large", "medium", "common"]),
-            v.description("图片尺寸"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
-      ),
+      inputSchema: schemas.getSubjectImageByIdInputSchema,
+      outputSchema: schemas.getSubjectImageByIdOutputSchema,
     },
     ({ subject_id, type }) =>
       client.api
@@ -723,43 +191,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目关联人物",
       description: "根据条目 ID 获取参与该条目的相关人物列表（制作人员、作者等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3]),
-              career: v.array(
-                v.picklist([
-                  "producer",
-                  "mangaka",
-                  "artist",
-                  "seiyu",
-                  "writer",
-                  "illustrator",
-                  "actor",
-                ]),
-              ),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              relation: v.string(),
-              eps: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedPersonsBySubjectIdInputSchema,
+      outputSchema: schemas.getRelatedPersonsBySubjectIdOutputSchema,
     },
     ({ subject_id }) =>
       client.api
@@ -775,60 +208,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目关联角色",
       description: "根据条目 ID 获取该条目登场的角色及配音列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              summary: v.string(),
-              type: v.picklist([1, 2, 3, 4]),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              relation: v.string(),
-              actors: v.array(
-                v.object({
-                  id: v.number(),
-                  name: v.string(),
-                  type: v.picklist([1, 2, 3]),
-                  career: v.array(
-                    v.picklist([
-                      "producer",
-                      "mangaka",
-                      "artist",
-                      "seiyu",
-                      "writer",
-                      "illustrator",
-                      "actor",
-                    ]),
-                  ),
-                  images: v.optional(
-                    v.object({
-                      large: v.string(),
-                      medium: v.string(),
-                      small: v.string(),
-                      grid: v.string(),
-                    }),
-                  ),
-                  short_summary: v.string(),
-                  locked: v.boolean(),
-                }),
-              ),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedCharactersBySubjectIdInputSchema,
+      outputSchema: schemas.getRelatedCharactersBySubjectIdOutputSchema,
     },
     ({ subject_id }) =>
       client.api
@@ -844,33 +225,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取关联条目",
       description: "根据条目 ID 获取与之关联的其他条目列表（前传、续作、番外、原声集等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.number(),
-              name: v.string(),
-              name_cn: v.string(),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  common: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              relation: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedSubjectsBySubjectIdInputSchema,
+      outputSchema: schemas.getRelatedSubjectsBySubjectIdOutputSchema,
     },
     ({ subject_id }) =>
       client.api
@@ -886,54 +242,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取章节列表",
       description: "根据条目 ID 分页获取章节（剧集/曲目）列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          type: v.optional(
-            v.pipe(
-              v.picklist([0, 1, 2, 3, 4, 5, 6]),
-              v.description(
-                "章节类型：0=本篇，1=特别篇，2=OP，3=ED，4=预告/宣传/广告，5=MAD，6=其他",
-              ),
-            ),
-          ),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(200),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.number(),
-              name: v.string(),
-              name_cn: v.string(),
-              sort: v.number(),
-              ep: v.optional(v.number()),
-              airdate: v.string(),
-              comment: v.number(),
-              duration: v.string(),
-              desc: v.string(),
-              disc: v.number(),
-              duration_seconds: v.optional(v.number()),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getEpisodesInputSchema,
+      outputSchema: schemas.getEpisodesOutputSchema,
     },
     ({ subject_id, type, limit, offset }) =>
       client.api
@@ -949,27 +259,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取章节详情",
       description: "根据章节 ID 获取单个章节的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          type: v.picklist([0, 1, 2, 3, 4, 5, 6]),
-          name: v.string(),
-          name_cn: v.string(),
-          sort: v.number(),
-          ep: v.optional(v.number()),
-          airdate: v.string(),
-          comment: v.number(),
-          duration: v.string(),
-          desc: v.string(),
-          disc: v.number(),
-          subject_id: v.number(),
-        }),
-      ),
+      inputSchema: schemas.getEpisodeByIdInputSchema,
+      outputSchema: schemas.getEpisodeByIdOutputSchema,
     },
     ({ episode_id }) =>
       client.api
@@ -983,40 +274,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取角色详情",
       description: "根据角色 ID 获取角色的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          name: v.string(),
-          type: v.picklist([1, 2, 3, 4]),
-          images: v.optional(
-            v.object({
-              large: v.string(),
-              medium: v.string(),
-              small: v.string(),
-              grid: v.string(),
-            }),
-          ),
-          summary: v.string(),
-          locked: v.boolean(),
-          infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
-          gender: v.optional(v.string()),
-          blood_type: v.optional(v.picklist([1, 2, 3, 4])),
-          birth_year: v.optional(v.number()),
-          birth_mon: v.optional(v.number()),
-          birth_day: v.optional(v.number()),
-          stat: v.object({ comments: v.number(), collects: v.number() }),
-        }),
-      ),
+      inputSchema: schemas.getCharacterByIdInputSchema,
+      outputSchema: schemas.getCharacterByIdOutputSchema,
     },
     ({ character_id }) =>
       client.api
@@ -1032,20 +291,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取角色肖像图",
       description: "根据角色 ID 和尺寸类型获取角色肖像图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-          type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("图片尺寸")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
-      ),
+      inputSchema: schemas.getCharacterImageByIdInputSchema,
+      outputSchema: schemas.getCharacterImageByIdOutputSchema,
     },
     ({ character_id, type }) =>
       client.api
@@ -1062,31 +309,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取角色出演条目",
       description: "根据角色 ID 获取该角色登场的关联条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.picklist([1, 2, 3, 4, 6]),
-              staff: v.string(),
-              eps: v.string(),
-              name: v.string(),
-              name_cn: v.string(),
-              image: v.optional(v.string()),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedSubjectsByCharacterIdInputSchema,
+      outputSchema: schemas.getRelatedSubjectsByCharacterIdOutputSchema,
     },
     ({ character_id }) =>
       client.api
@@ -1102,40 +326,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取角色关联人物",
       description: "根据角色 ID 获取关联的现实人物列表（如声优、演员）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3, 4]),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              subject_id: v.number(),
-              subject_type: v.picklist([1, 2, 3, 4, 6]),
-              subject_name: v.string(),
-              subject_name_cn: v.string(),
-              staff: v.optional(v.string()),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedPersonsByCharacterIdInputSchema,
+      outputSchema: schemas.getRelatedPersonsByCharacterIdOutputSchema,
     },
     ({ character_id }) =>
       client.api
@@ -1156,17 +348,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.collectCharacterInputSchema,
+      outputSchema: schemas.collectCharacterOutputSchema,
     },
     ({ character_id }) =>
       client.api
@@ -1187,17 +370,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.uncollectCharacterInputSchema,
+      outputSchema: schemas.uncollectCharacterOutputSchema,
     },
     ({ character_id }) =>
       client.api
@@ -1213,47 +387,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取人物详情",
       description: "根据人物 ID 获取现实人物或制作团体的详细信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          name: v.string(),
-          type: v.picklist([1, 2, 3]),
-          career: v.array(
-            v.picklist([
-              "producer",
-              "mangaka",
-              "artist",
-              "seiyu",
-              "writer",
-              "illustrator",
-              "actor",
-            ]),
-          ),
-          images: v.optional(
-            v.object({
-              large: v.string(),
-              medium: v.string(),
-              small: v.string(),
-              grid: v.string(),
-            }),
-          ),
-          summary: v.string(),
-          locked: v.boolean(),
-          last_modified: v.string(),
-          infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
-          gender: v.optional(v.string()),
-          blood_type: v.optional(v.picklist([1, 2, 3, 4])),
-          birth_year: v.optional(v.number()),
-          birth_mon: v.optional(v.number()),
-          birth_day: v.optional(v.number()),
-          stat: v.object({ comments: v.number(), collects: v.number() }),
-        }),
-      ),
+      inputSchema: schemas.getPersonByIdInputSchema,
+      outputSchema: schemas.getPersonByIdOutputSchema,
     },
     ({ person_id }) =>
       client.api
@@ -1267,15 +402,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取人物肖像图",
       description: "根据人物 ID 和尺寸类型获取人物肖像图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-          type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("图片尺寸")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
-      ),
+      inputSchema: schemas.getPersonImageByIdInputSchema,
+      outputSchema: schemas.getPersonImageByIdOutputSchema,
     },
     ({ person_id, type }) =>
       client.api
@@ -1292,26 +420,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取人物参与条目",
       description: "根据人物 ID 获取其参与制作、创作或出演的条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.picklist([1, 2, 3, 4, 6]),
-              staff: v.string(),
-              eps: v.string(),
-              name: v.string(),
-              name_cn: v.string(),
-              image: v.optional(v.string()),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedSubjectsByPersonIdInputSchema,
+      outputSchema: schemas.getRelatedSubjectsByPersonIdOutputSchema,
     },
     ({ person_id }) =>
       client.api
@@ -1327,35 +437,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取人物配音/出演角色",
       description: "根据人物 ID 获取其配音或扮演的虚拟角色列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3, 4]),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              subject_id: v.number(),
-              subject_type: v.picklist([1, 2, 3, 4, 6]),
-              subject_name: v.string(),
-              subject_name_cn: v.string(),
-              staff: v.optional(v.string()),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getRelatedCharactersByPersonIdInputSchema,
+      outputSchema: schemas.getRelatedCharactersByPersonIdOutputSchema,
     },
     ({ person_id }) =>
       client.api
@@ -1376,12 +459,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.collectPersonInputSchema,
+      outputSchema: schemas.collectPersonOutputSchema,
     },
     ({ person_id }) =>
       client.api
@@ -1402,12 +481,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.uncollectPersonInputSchema,
+      outputSchema: schemas.uncollectPersonOutputSchema,
     },
     ({ person_id }) =>
       client.api
@@ -1423,24 +498,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户信息",
       description: "根据用户名获取用户的公开个人资料",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          username: v.string(),
-          nickname: v.string(),
-          user_group: v.picklist([1, 2, 3, 4, 5, 8, 9, 10, 11]),
-          avatar: v.object({ large: v.string(), medium: v.string(), small: v.string() }),
-          sign: v.string(),
-        }),
-      ),
+      inputSchema: schemas.getUserByNameInputSchema,
+      outputSchema: schemas.getUserByNameOutputSchema,
     },
     ({ username }) =>
       client.api.GET("/v0/users/{username}", { params: { path: { username } } }).then(toJsonResult),
@@ -1452,18 +511,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户头像",
       description: "根据用户名和尺寸类型获取用户头像图片",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-          type: v.pipe(v.picklist(["small", "large", "medium"]), v.description("头像尺寸")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({ url: v.string(), mimeType: v.optional(v.string()) }),
-      ),
+      inputSchema: schemas.getUserAvatarByNameInputSchema,
+      outputSchema: schemas.getUserAvatarByNameOutputSchema,
     },
     ({ username, type }) =>
       client.api
@@ -1480,19 +529,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取当前登录用户信息",
       description: "获取当前授权登录用户的个人信息（包括 username、UID、昵称等）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          username: v.string(),
-          nickname: v.string(),
-          user_group: v.picklist([1, 2, 3, 4, 5, 8, 9, 10, 11]),
-          avatar: v.object({ large: v.string(), medium: v.string(), small: v.string() }),
-          sign: v.string(),
-          email: v.optional(v.string()),
-          reg_time: v.optional(v.string()),
-          time_offset: v.optional(v.number()),
-        }),
-      ),
+      outputSchema: schemas.getMeOutputSchema,
     },
     () => client.api.GET("/v0/me").then(toJsonResult),
   );
@@ -1503,84 +540,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户条目收藏列表",
       description: "分页获取指定用户的条目收藏列表（私有收藏仅本人可见）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-          subject_type: v.optional(
-            v.pipe(
-              v.picklist([1, 2, 3, 4, 6]),
-              v.description("条目类型筛选（默认全部）：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
-            ),
-          ),
-          type: v.optional(
-            v.pipe(
-              v.picklist([1, 2, 3, 4, 5]),
-              v.description("收藏状态筛选（默认全部）：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
-            ),
-          ),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              subject_id: v.number(),
-              subject_type: v.picklist([1, 2, 3, 4, 6]),
-              rate: v.number(),
-              type: v.picklist([1, 2, 3, 4, 5]),
-              comment: v.optional(v.string()),
-              tags: v.array(v.string()),
-              ep_status: v.number(),
-              vol_status: v.number(),
-              updated_at: v.string(),
-              private: v.boolean(),
-              subject: v.optional(
-                v.object({
-                  id: v.number(),
-                  type: v.picklist([1, 2, 3, 4, 6]),
-                  name: v.string(),
-                  name_cn: v.string(),
-                  short_summary: v.string(),
-                  date: v.optional(v.string()),
-                  images: v.object({
-                    large: v.string(),
-                    common: v.string(),
-                    medium: v.string(),
-                    small: v.string(),
-                    grid: v.string(),
-                  }),
-                  volumes: v.number(),
-                  eps: v.number(),
-                  collection_total: v.number(),
-                  score: v.number(),
-                  rank: v.number(),
-                  tags: v.array(
-                    v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
-                  ),
-                }),
-              ),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getUserCollectionsInputSchema,
+      outputSchema: schemas.getUserCollectionsOutputSchema,
     },
     ({ username, subject_type, type, limit, offset }) =>
       client.api
@@ -1596,54 +557,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户单个条目收藏",
       description: "获取指定用户对单个条目的收藏状态、评分及评论（私有收藏仅本人可见）",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.number(),
-          subject_type: v.picklist([1, 2, 3, 4, 6]),
-          rate: v.number(),
-          type: v.picklist([1, 2, 3, 4, 5]),
-          comment: v.optional(v.string()),
-          tags: v.array(v.string()),
-          ep_status: v.number(),
-          vol_status: v.number(),
-          updated_at: v.string(),
-          private: v.boolean(),
-          subject: v.optional(
-            v.object({
-              id: v.number(),
-              type: v.picklist([1, 2, 3, 4, 6]),
-              name: v.string(),
-              name_cn: v.string(),
-              short_summary: v.string(),
-              date: v.optional(v.string()),
-              images: v.object({
-                large: v.string(),
-                common: v.string(),
-                medium: v.string(),
-                small: v.string(),
-                grid: v.string(),
-              }),
-              volumes: v.number(),
-              eps: v.number(),
-              collection_total: v.number(),
-              score: v.number(),
-              rank: v.number(),
-              tags: v.array(
-                v.object({ name: v.string(), count: v.number(), total_count: v.number() }),
-              ),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getUserCollectionInputSchema,
+      outputSchema: schemas.getUserCollectionOutputSchema,
     },
     ({ username, subject_id }) =>
       client.api
@@ -1665,51 +580,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          type: v.optional(
-            v.pipe(
-              v.picklist([1, 2, 3, 4, 5]),
-              v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
-            ),
-          ),
-          rate: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(0),
-              v.maxValue(10),
-              v.description("评分（1-10，`0` 表示删除评分）"),
-            ),
-          ),
-          ep_status: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(0),
-              v.description("看到的话数进度（仅适用于书籍类条目）"),
-            ),
-          ),
-          vol_status: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(0),
-              v.description("看到的卷数进度（仅适用于书籍类条目）"),
-            ),
-          ),
-          comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
-          private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
-          tags: v.optional(
-            v.pipe(
-              v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
-              v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
-            ),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.postUserCollectionInputSchema,
+      outputSchema: schemas.postUserCollectionOutputSchema,
     },
     ({ subject_id, ...body }) =>
       client.api
@@ -1732,51 +604,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          type: v.optional(
-            v.pipe(
-              v.picklist([1, 2, 3, 4, 5]),
-              v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
-            ),
-          ),
-          rate: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(0),
-              v.maxValue(10),
-              v.description("评分（1-10，`0` 表示删除评分）"),
-            ),
-          ),
-          ep_status: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(0),
-              v.description("看到的话数进度（仅适用于书籍类条目）"),
-            ),
-          ),
-          vol_status: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(0),
-              v.description("看到的卷数进度（仅适用于书籍类条目）"),
-            ),
-          ),
-          comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
-          private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
-          tags: v.optional(
-            v.pipe(
-              v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
-              v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
-            ),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.patchUserCollectionInputSchema,
+      outputSchema: schemas.patchUserCollectionOutputSchema,
     },
     ({ subject_id, ...body }) =>
       client.api
@@ -1793,60 +622,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目章节收藏状态",
       description: "分页获取当前登录用户在指定条目下的各章节（剧集）收藏状态",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(1000),
-              v.description("分页大小"),
-            ),
-          ),
-          episode_type: v.optional(
-            v.pipe(
-              v.picklist([0, 1, 2, 3, 4, 5, 6]),
-              v.description(
-                "章节类型筛选（不传则不过滤）：0=本篇，1=特别篇，2=OP，3=ED，4=预告/宣传/广告，5=MAD，6=其他",
-              ),
-            ),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.optional(
-            v.array(
-              v.object({
-                episode: v.object({
-                  id: v.number(),
-                  type: v.number(),
-                  name: v.string(),
-                  name_cn: v.string(),
-                  sort: v.number(),
-                  ep: v.optional(v.number()),
-                  airdate: v.string(),
-                  comment: v.number(),
-                  duration: v.string(),
-                  desc: v.string(),
-                  disc: v.number(),
-                  duration_seconds: v.optional(v.number()),
-                }),
-                type: v.picklist([0, 1, 2, 3]),
-                updated_at: v.number(),
-              }),
-            ),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getUserSubjectEpisodeCollectionInputSchema,
+      outputSchema: schemas.getUserSubjectEpisodeCollectionOutputSchema,
     },
     ({ subject_id, offset, limit, episode_type }) =>
       client.api
@@ -1868,20 +645,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          episode_id: v.pipe(
-            v.array(v.pipe(v.number(), v.safeInteger())),
-            v.description("要更新的章节 ID 列表"),
-          ),
-          type: v.pipe(
-            v.picklist([0, 1, 2, 3]),
-            v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.patchUserSubjectEpisodeCollectionInputSchema,
+      outputSchema: schemas.patchUserSubjectEpisodeCollectionOutputSchema,
     },
     ({ subject_id, episode_id, type }) =>
       client.api
@@ -1898,31 +663,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取单个章节收藏状态",
       description: "获取当前登录用户对指定章节的观看/收藏状态",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          episode: v.object({
-            id: v.number(),
-            type: v.number(),
-            name: v.string(),
-            name_cn: v.string(),
-            sort: v.number(),
-            ep: v.optional(v.number()),
-            airdate: v.string(),
-            comment: v.number(),
-            duration: v.string(),
-            desc: v.string(),
-            disc: v.number(),
-            duration_seconds: v.optional(v.number()),
-          }),
-          type: v.picklist([0, 1, 2, 3]),
-          updated_at: v.number(),
-        }),
-      ),
+      inputSchema: schemas.getUserEpisodeCollectionInputSchema,
+      outputSchema: schemas.getUserEpisodeCollectionOutputSchema,
     },
     ({ episode_id }) =>
       client.api
@@ -1943,16 +685,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
-          type: v.pipe(
-            v.picklist([0, 1, 2, 3]),
-            v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.putUserEpisodeCollectionInputSchema,
+      outputSchema: schemas.putUserEpisodeCollectionOutputSchema,
     },
     ({ episode_id, type }) =>
       client.api
@@ -1969,37 +703,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户角色收藏列表",
       description: "获取指定用户收藏的角色列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3, 4]),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              created_at: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getUserCharacterCollectionsInputSchema,
+      outputSchema: schemas.getUserCharacterCollectionsOutputSchema,
     },
     ({ username }) =>
       client.api
@@ -2015,36 +720,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户单个角色收藏信息",
       description: "获取指定用户对单个角色的收藏信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          name: v.string(),
-          type: v.picklist([1, 2, 3, 4]),
-          images: v.optional(
-            v.object({
-              large: v.string(),
-              medium: v.string(),
-              small: v.string(),
-              grid: v.string(),
-            }),
-          ),
-          created_at: v.string(),
-        }),
-      ),
+      inputSchema: schemas.getUserCharacterCollectionInputSchema,
+      outputSchema: schemas.getUserCharacterCollectionOutputSchema,
     },
     ({ username, character_id }) =>
       client.api
@@ -2060,48 +737,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户人物收藏列表",
       description: "获取指定用户收藏的现实人物列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              name: v.string(),
-              type: v.picklist([1, 2, 3]),
-              career: v.array(
-                v.picklist([
-                  "producer",
-                  "mangaka",
-                  "artist",
-                  "seiyu",
-                  "writer",
-                  "illustrator",
-                  "actor",
-                ]),
-              ),
-              images: v.optional(
-                v.object({
-                  large: v.string(),
-                  medium: v.string(),
-                  small: v.string(),
-                  grid: v.string(),
-                }),
-              ),
-              created_at: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getUserPersonCollectionsInputSchema,
+      outputSchema: schemas.getUserPersonCollectionsOutputSchema,
     },
     ({ username }) =>
       client.api
@@ -2117,42 +754,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取用户单个人物收藏信息",
       description: "获取指定用户对单个人物的收藏信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          username: v.pipe(
-            v.string(),
-            v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
-          ),
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          name: v.string(),
-          type: v.picklist([1, 2, 3]),
-          career: v.array(
-            v.picklist([
-              "producer",
-              "mangaka",
-              "artist",
-              "seiyu",
-              "writer",
-              "illustrator",
-              "actor",
-            ]),
-          ),
-          images: v.optional(
-            v.object({
-              large: v.string(),
-              medium: v.string(),
-              small: v.string(),
-              grid: v.string(),
-            }),
-          ),
-          created_at: v.string(),
-        }),
-      ),
+      inputSchema: schemas.getUserPersonCollectionInputSchema,
+      outputSchema: schemas.getUserPersonCollectionOutputSchema,
     },
     ({ username, person_id }) =>
       client.api
@@ -2168,39 +771,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取人物历史修订列表",
       description: "根据人物 ID 分页获取该人物词条的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.number(),
-              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-              summary: v.string(),
-              created_at: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getPersonRevisionsInputSchema,
+      outputSchema: schemas.getPersonRevisionsOutputSchema,
     },
     ({ person_id, limit, offset }) =>
       client.api
@@ -2216,45 +788,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取人物历史修订详情",
       description: "根据修订版本 ID 获取人物词条单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          revision_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("历史修订版本 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          type: v.number(),
-          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-          summary: v.string(),
-          created_at: v.string(),
-          data: v.optional(
-            v.record(
-              v.string(),
-              v.object({
-                prsn_infobox: v.string(),
-                prsn_summary: v.string(),
-                prsn_name: v.string(),
-                profession: v.object({
-                  producer: v.optional(v.string()),
-                  mangaka: v.optional(v.string()),
-                  artist: v.optional(v.string()),
-                  seiyu: v.optional(v.string()),
-                  writer: v.optional(v.string()),
-                  illustrator: v.optional(v.string()),
-                  actor: v.optional(v.string()),
-                }),
-                extra: v.object({ img: v.optional(v.string()) }),
-              }),
-            ),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getPersonRevisionByIdInputSchema,
+      outputSchema: schemas.getPersonRevisionByIdOutputSchema,
     },
     ({ revision_id }) =>
       client.api
@@ -2270,44 +805,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取角色历史修订列表",
       description: "根据角色 ID 分页获取该角色词条的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          character_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("角色 ID"),
-          ),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.number(),
-              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-              summary: v.string(),
-              created_at: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getCharacterRevisionsInputSchema,
+      outputSchema: schemas.getCharacterRevisionsOutputSchema,
     },
     ({ character_id, limit, offset }) =>
       client.api
@@ -2323,36 +822,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取角色历史修订详情",
       description: "根据修订版本 ID 获取角色词条单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          revision_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("历史修订版本 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          type: v.number(),
-          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-          summary: v.string(),
-          created_at: v.string(),
-          data: v.optional(
-            v.record(
-              v.string(),
-              v.object({
-                infobox: v.string(),
-                summary: v.string(),
-                name: v.string(),
-                extra: v.object({ img: v.optional(v.string()) }),
-              }),
-            ),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getCharacterRevisionByIdInputSchema,
+      outputSchema: schemas.getCharacterRevisionByIdOutputSchema,
     },
     ({ revision_id }) =>
       client.api
@@ -2368,39 +839,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目历史修订列表",
       description: "根据条目 ID 分页获取该条目词条的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.number(),
-              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-              summary: v.string(),
-              created_at: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getSubjectRevisionsInputSchema,
+      outputSchema: schemas.getSubjectRevisionsOutputSchema,
     },
     ({ subject_id, limit, offset }) =>
       client.api
@@ -2416,39 +856,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取条目历史修订详情",
       description: "根据修订版本 ID 获取条目词条单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          revision_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("历史修订版本 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          type: v.number(),
-          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-          summary: v.string(),
-          created_at: v.string(),
-          data: v.optional(
-            v.object({
-              field_eps: v.number(),
-              field_infobox: v.string(),
-              field_summary: v.string(),
-              name: v.string(),
-              name_cn: v.string(),
-              platform: v.number(),
-              subject_id: v.number(),
-              type: v.number(),
-              type_id: v.number(),
-              vote_field: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getSubjectRevisionByIdInputSchema,
+      outputSchema: schemas.getSubjectRevisionByIdOutputSchema,
     },
     ({ revision_id }) =>
       client.api
@@ -2464,39 +873,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取章节历史修订列表",
       description: "根据章节 ID 分页获取该章节的编辑历史列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-          data: v.array(
-            v.object({
-              id: v.number(),
-              type: v.number(),
-              creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-              summary: v.string(),
-              created_at: v.string(),
-            }),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getEpisodeRevisionsInputSchema,
+      outputSchema: schemas.getEpisodeRevisionsOutputSchema,
     },
     ({ episode_id, limit, offset }) =>
       client.api
@@ -2512,31 +890,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取章节历史修订详情",
       description: "根据修订版本 ID 获取章节单次修订的详细内容",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          revision_id: v.pipe(
-            v.number(),
-            v.safeInteger(),
-            v.minValue(1),
-            v.description("历史修订版本 ID"),
-          ),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          type: v.number(),
-          creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
-          summary: v.string(),
-          created_at: v.string(),
-          data: v.optional(
-            v.pipe(
-              v.record(v.string(), v.unknown()),
-              v.description("编辑修改内容，响应类型不固定"),
-            ),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getEpisodeRevisionByIdInputSchema,
+      outputSchema: schemas.getEpisodeRevisionByIdOutputSchema,
     },
     ({ revision_id }) =>
       client.api
@@ -2557,20 +912,7 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          title: v.string(),
-          desc: v.string(),
-          total: v.number(),
-          stat: v.object({ comments: v.number(), collects: v.number() }),
-          created_at: v.string(),
-          updated_at: v.string(),
-          creator: v.object({ username: v.string(), nickname: v.string() }),
-          ban: v.boolean(),
-          nsfw: v.boolean(),
-        }),
-      ),
+      outputSchema: schemas.newIndexOutputSchema,
     },
     () => client.api.POST("/v0/indices").then(toJsonResult),
   );
@@ -2581,25 +923,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取目录详情",
       description: "根据目录 ID 获取目录的基本信息",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          title: v.string(),
-          desc: v.string(),
-          total: v.number(),
-          stat: v.object({ comments: v.number(), collects: v.number() }),
-          created_at: v.string(),
-          updated_at: v.string(),
-          creator: v.object({ username: v.string(), nickname: v.string() }),
-          ban: v.boolean(),
-          nsfw: v.boolean(),
-        }),
-      ),
+      inputSchema: schemas.getIndexByIdInputSchema,
+      outputSchema: schemas.getIndexByIdOutputSchema,
     },
     ({ index_id }) =>
       client.api
@@ -2618,27 +943,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          title: v.optional(v.pipe(v.string(), v.description("目录标题"))),
-          description: v.optional(v.pipe(v.string(), v.description("目录描述"))),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          id: v.number(),
-          title: v.string(),
-          desc: v.string(),
-          total: v.number(),
-          stat: v.object({ comments: v.number(), collects: v.number() }),
-          created_at: v.string(),
-          updated_at: v.string(),
-          creator: v.object({ username: v.string(), nickname: v.string() }),
-          ban: v.boolean(),
-          nsfw: v.boolean(),
-        }),
-      ),
+      inputSchema: schemas.editIndexByIdInputSchema,
+      outputSchema: schemas.editIndexByIdOutputSchema,
     },
     ({ index_id, title, description }) =>
       client.api
@@ -2655,38 +961,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
       title: "获取目录条目列表",
       description: "根据目录 ID 分页获取该目录中收录的条目列表",
       annotations: { readOnlyHint: true, openWorldHint: true },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          type: v.optional(
-            v.pipe(
-              v.picklist([1, 2, 3, 4, 6]),
-              v.description("条目类型筛选：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
-            ),
-          ),
-          limit: v.optional(
-            v.pipe(
-              v.number(),
-              v.safeInteger(),
-              v.minValue(1),
-              v.maxValue(50),
-              v.description("分页大小"),
-            ),
-          ),
-          offset: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
-          ),
-        }),
-      ),
+      inputSchema: schemas.getIndexSubjectsByIndexIdInputSchema,
       // 上游此接口存在问题：https://github.com/bangumi/api/issues/243
-      outputSchema: toStandardJsonSchema(
-        v.object({
-          data: v.array(v.unknown()),
-          total: v.number(),
-          limit: v.number(),
-          offset: v.number(),
-        }),
-      ),
+      outputSchema: schemas.getIndexSubjectsByIndexIdOutputSchema,
     },
     ({ index_id, type, limit, offset }) =>
       client.api
@@ -2707,19 +984,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          subject_id: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.description("要添加的条目 ID")),
-          ),
-          sort: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
-          ),
-          comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.addSubjectToIndexInputSchema,
+      outputSchema: schemas.addSubjectToIndexOutputSchema,
     },
     ({ index_id, subject_id, sort, comment }) =>
       client.api
@@ -2741,17 +1007,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-          sort: v.optional(
-            v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前")),
-          ),
-          comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.editIndexSubjectInputSchema,
+      outputSchema: schemas.editIndexSubjectOutputSchema,
     },
     ({ index_id, subject_id, sort, comment }) =>
       client.api
@@ -2773,13 +1030,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-          subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.deleteSubjectFromIndexInputSchema,
+      outputSchema: schemas.deleteSubjectFromIndexOutputSchema,
     },
     ({ index_id, subject_id }) =>
       client.api
@@ -2800,12 +1052,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: false,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.collectIndexInputSchema,
+      outputSchema: schemas.collectIndexOutputSchema,
     },
     ({ index_id }) =>
       client.api
@@ -2826,12 +1074,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
         idempotentHint: true,
         openWorldHint: true,
       },
-      inputSchema: toStandardJsonSchema(
-        v.object({
-          index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-        }),
-      ),
-      outputSchema: toStandardJsonSchema(v.object({ success: v.literal(true) })),
+      inputSchema: schemas.uncollectIndexInputSchema,
+      outputSchema: schemas.uncollectIndexOutputSchema,
     },
     ({ index_id }) =>
       client.api
