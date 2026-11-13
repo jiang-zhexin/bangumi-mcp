@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="把 Bangumi 番组计划接入你的 AI 助手。用自然语言发现作品、查询每日放送、管理收藏与观看进度。通过官方 OAuth 授权，使用远程 MCP 即可连接。"
+    />
+    <title>Bangumi MCP · 让喜欢的作品，接上你的 AI</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳至主要内容</a>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="Bangumi MCP 首页">
+          <img class="brand-mark" src="/favicon.svg" width="32" height="32" alt="" />
+          <span>bangumi<span class="brand-dot">·</span>mcp</span>
+        </a>
+        <nav class="main-nav" aria-label="主导航">
+          <a href="#features">能做什么</a>
+          <a href="#connect">如何接入</a>
+          <a href="#faq">常见问题</a>
+        </nav>
+        <label class="theme-switch" title="切换亮色 / 暗色模式">
+          <input type="checkbox" id="theme-toggle" aria-label="反转系统主题" autocomplete="off" />
+          <span class="theme-icon" aria-hidden="true">
+            <svg
+              class="theme-sun"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              focusable="false"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"
+              />
+            </svg>
+            <svg
+              class="theme-moon"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              focusable="false"
+            >
+              <path d="M20.9 13.3A9 9 0 0 1 10.7 3.1a9 9 0 1 0 10.2 10.2Z" />
+            </svg>
+          </span>
+        </label>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="container hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">BANGUMI × MODEL CONTEXT PROTOCOL</p>
+          <h1 id="hero-title">让喜欢的作品，<br />接上你的 <em>AI。</em></h1>
+          <p class="hero-description">
+            找一部好番，记下追番进度，整理你的收藏。<br
+              class="desktop-break"
+            />把这些小事，交给懂你指令的 AI 助手。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#connect">连接 Bangumi</a>
+            <a
+              class="text-link"
+              href="https://github.com/jiang-zhexin/bangumi-mcp"
+              target="_blank"
+              rel="noopener"
+              >在 GitHub 查看 <span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <ul class="benefits" aria-label="服务特点">
+            <li><span aria-hidden="true">✦</span> 官方 OAuth 授权</li>
+            <li><span aria-hidden="true">✦</span> 无需本地部署</li>
+            <li><span aria-hidden="true">✦</span> 开源，自由连接</li>
+          </ul>
+        </div>
+
+        <div class="connection-preview">
+          <div class="config-card">
+            <div class="card-heading">
+              <span class="file-name">mcp.json</span><span class="tag">REMOTE MCP</span>
+            </div>
+            <div class="config-intro">
+              <h2>一个地址，连接你的番组计划。</h2>
+              <p>添加到支持远程 MCP 与 OAuth 的客户端</p>
+            </div>
+            <pre class="config-code" tabindex="0" aria-label="MCP JSON 配置，可选择并复制"><code>{
+  <span class="code-key">"mcpServers"</span>: {
+    <span class="code-key">"bangumi"</span>: {
+      <span class="code-key">"url"</span>: <span class="code-string">"https://bgm.zhexin.org/mcp"</span>
+    }
+  }
+}</code></pre>
+            <div class="card-foot">
+              <span aria-hidden="true">✦</span>
+              首次连接时，按客户端提示完成 Bangumi 授权
+            </div>
+          </div>
+          <p class="preview-caption">
+            你的 AI 助手 <span aria-hidden="true">⟷</span> Bangumi MCP
+            <span aria-hidden="true">⟷</span> 番组计划
+          </p>
+        </div>
+      </section>
+
+      <div class="container compatibility">
+        <p>在熟悉的工具里，继续你的兴趣。</p>
+        <ul aria-label="客户端示例">
+          <li>Pi</li>
+          <li>DeepSeek Harness</li>
+          <li>OpenCode</li>
+          <li>Codex</li>
+          <li>Claude Code</li>
+          <li>更多 MCP 客户端</li>
+        </ul>
+      </div>
+
+      <section class="container section" id="features" aria-labelledby="features-title">
+        <div class="section-heading">
+          <p class="eyebrow">LESS CLICKING, MORE DISCOVERING</p>
+          <h2 id="features-title">少一点切换，多一点喜欢。</h2>
+          <p>不止是查资料。让对话连上作品，也连上你自己的收藏。</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">⌕</span>
+            <p class="small-label">01 / 发现作品</p>
+            <h3>下一部看什么？聊聊就知道。</h3>
+            <p>查询每日放送，搜索动画、书籍、游戏与音乐，了解评分、简介和条目详情。</p>
+            <blockquote>“今天有哪些动画放送？”</blockquote>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">↗</span>
+            <p class="small-label">02 / 深入了解</p>
+            <h3>从一部作品，找到更多故事。</h3>
+            <p>查看章节、角色、声优和制作人员，顺着关联信息探索，也能浏览条目的编辑历史。</p>
+            <blockquote>“这部动画的配音演员还有哪些作品？”</blockquote>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">✓</span>
+            <p class="small-label">03 / 记录喜欢</p>
+            <h3>看到哪了？一句话记下来。</h3>
+            <p>标记想看、在看和看过，打分、写短评、更新进度，还可以收藏人物、角色与管理目录。</p>
+            <blockquote>“把这部番标记为在看，进度更新到第 3 话。”</blockquote>
+          </article>
+        </div>
+        <p class="section-note">
+          以上为对话示例；实际结果取决于 Bangumi 数据与客户端的工具调用能力。
+        </p>
+      </section>
+
+      <section class="setup-section" id="connect" aria-labelledby="connect-title">
+        <div class="container setup-layout">
+          <div class="section-heading">
+            <p class="eyebrow">THREE SIMPLE STEPS</p>
+            <h2 id="connect-title">接上它，<br />然后开始聊天。</h2>
+            <p>无需下载额外的服务端，<br />也不用手动粘贴 Bangumi 访问令牌。</p>
+          </div>
+          <ol class="steps">
+            <li>
+              <span class="step-number" aria-hidden="true">01</span>
+              <div>
+                <h3>添加远程 MCP 服务</h3>
+                <p>
+                  在客户端的 MCP 设置中添加下方地址，或使用上方的 JSON
+                  配置。不同客户端的配置格式可能不同。
+                </p>
+                <code class="endpoint">https://bgm.zhexin.org/mcp</code>
+              </div>
+            </li>
+            <li>
+              <span class="step-number" aria-hidden="true">02</span>
+              <div>
+                <h3>在 Bangumi 完成授权</h3>
+                <p>首次启用服务时，跟随客户端打开的官方授权页面，登录 Bangumi 并确认授权。</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number" aria-hidden="true">03</span>
+              <div>
+                <h3>回到助手，说说你想做什么</h3>
+                <p>
+                  试着问一句「今天有哪些新番？」。涉及收藏、评分或进度修改时，建议开启工具调用确认。
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="container section faq-section" id="faq" aria-labelledby="faq-title">
+        <div class="section-heading">
+          <p class="eyebrow">A FEW THINGS TO KNOW</p>
+          <h2 id="faq-title">你可能还想知道。</h2>
+          <p>关于连接、授权，以及你的数据。</p>
+        </div>
+        <div class="faq-list">
+          <details name="faq">
+            <summary>
+              需要什么样的 AI 客户端？<span class="disclosure-icon" aria-hidden="true"></span>
+            </summary>
+            <p>
+              需要支持远程 MCP URL 和 OAuth 授权流程的客户端，例如 Pi、DeepSeek Harness、OpenCode、
+              Codex、Claude Code。
+            </p>
+          </details>
+          <details name="faq">
+            <summary>
+              我的 Bangumi 密码会交给服务吗？<span
+                class="disclosure-icon"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <p>
+              不会。登录通过 Bangumi 官方 OAuth 完成，本服务不接触你的账号密码。服务端会保存 Bangumi
+              下发的访问令牌，令牌加密存储在 Cloudflare KV 中，并在过期后自动刷新。
+            </p>
+          </details>
+          <details name="faq">
+            <summary>
+              AI 会修改我的收藏吗？<span class="disclosure-icon" aria-hidden="true"></span>
+            </summary>
+            <p>
+              可以。收藏、打分、更新进度和编辑目录等写操作，都以你的身份执行，效果与你在 bgm.tv
+              上手动操作相同。
+            </p>
+          </details>
+          <details name="faq">
+            <summary>
+              如何撤销授权？<span class="disclosure-icon" aria-hidden="true"></span>
+            </summary>
+            <p>
+              你可以前往
+              <a href="https://next.bgm.tv/demo/access-token" target="_blank" rel="noopener"
+                >Bangumi 的应用授权管理页面</a
+              >
+              移除授权，并在 AI 客户端中删除该 MCP 服务配置。
+            </p>
+          </details>
+          <details name="faq">
+            <summary>
+              可以部署自己的版本吗？<span class="disclosure-icon" aria-hidden="true"></span>
+            </summary>
+            <p>
+              可以。申请自己的 Bangumi 应用后，按照
+              <a
+                href="https://github.com/jiang-zhexin/bangumi-mcp#自行部署可选"
+                target="_blank"
+                rel="noopener"
+                >仓库中的部署说明</a
+              >
+              配置即可。
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container site-footer">
+      <div>
+        <a class="brand" href="/">bangumi<span class="brand-dot">·</span>mcp</a>
+        <p>一个连接 AI 与番组计划的开源项目，非 Bangumi 官方产品。</p>
+      </div>
+      <nav aria-label="相关链接">
+        <a href="https://github.com/jiang-zhexin/bangumi-mcp" target="_blank" rel="noopener"
+          >GitHub ↗</a
+        ><a href="https://bgm.tv" target="_blank" rel="noopener">Bangumi ↗</a
+        ><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP 协议 ↗</a>
+      </nav>
+    </footer>
+  </body>
+</html>
