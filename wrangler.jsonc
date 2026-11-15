@@ -13,6 +13,9 @@
   "observability": {
     "enabled": true,
     "redact_query_string": true,
+    "traces": {
+      "enabled": true,
+    },
   },
   "kv_namespaces": [
     {
