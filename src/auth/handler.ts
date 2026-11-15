@@ -15,11 +15,6 @@ export const authHandler = new Hono<{
 }>();
 
 authHandler.use(methodNotAllowed({ app: authHandler }));
-authHandler.use(async (c, next) => {
-  c.header("Cache-Control", "no-store");
-  c.header("Pragma", "no-cache");
-  await next();
-});
 
 authHandler.get("/authorize", async (c) => {
   const oauth = c.env.OAUTH_PROVIDER;
