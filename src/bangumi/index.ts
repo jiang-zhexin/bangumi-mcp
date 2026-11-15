@@ -103,10 +103,10 @@ export class BangumiClient {
   public readonly api: ReturnType<typeof createClient<BangumiPaths>>;
 
   constructor(accessToken: string) {
-    const headers = mergeHeaders({ "User-Agent": DEFAULT_BGM_USER_AGENT });
-    if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
-    }
+    const headers = mergeHeaders({
+      Authorization: `Bearer ${accessToken}`,
+      "User-Agent": DEFAULT_BGM_USER_AGENT,
+    });
 
     this.api = createClient<BangumiPaths>({
       baseUrl: BGM_API_BASE_URL,
