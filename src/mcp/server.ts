@@ -11,7 +11,8 @@ export function createBgmMcpServer(client: BangumiClient): McpServer {
       version: "1.0.0",
     },
     {
-      instructions: "Bangumi (番组计划 / bgm.tv) Remote MCP Server",
+      instructions:
+        "Bangumi (bgm.tv) MCP Server for searching and managing anime, manga, books, music, games, live-action shows, episodes, characters, voice actors (seiyu), staff, studios, broadcast schedules, user watchlists/collections, ratings, and curated lists.",
     },
   );
 

@@ -70,8 +70,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_calendar",
     {
-      title: "每日放送",
-      description: "获取每周每日放送的番剧时间表",
+      title: "Get Weekly Anime Broadcast Schedule",
+      description:
+        "Get the weekly anime broadcast calendar and daily airing schedule for currently airing shows.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       outputSchema: schemas.getCalendarOutputSchema,
     },
@@ -81,9 +82,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "search_subjects",
     {
-      title: "条目搜索",
+      title: "Search Anime, Manga, Books, Music, Games & Shows",
       description:
-        "根据关键词和过滤条件搜索条目（书籍、动画、音乐、游戏、三次元）。不同筛选条件之间为「且」关系。",
+        "Search media entries (anime, manga, books, light novels, music, games, and live-action shows/dramas) by keyword and filters such as type, tags, release/air date, rating score, rank, and NSFW. All filter conditions are combined with AND logic.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.searchSubjectsInputSchema,
       outputSchema: schemas.searchSubjectsOutputSchema,
@@ -100,8 +101,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "search_characters",
     {
-      title: "角色搜索",
-      description: "根据关键词搜索虚拟角色",
+      title: "Search Fictional Characters",
+      description:
+        "Search fictional characters from anime, manga, games, and books by keyword and NSFW filter.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.searchCharactersInputSchema,
       outputSchema: schemas.searchCharactersOutputSchema,
@@ -118,8 +120,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "search_persons",
     {
-      title: "人物搜索",
-      description: "根据关键词和职业搜索现实人物或制作团体（声优、作者、监督、制作公司等）",
+      title: "Search Staff, Creators, Voice Actors & Studios",
+      description:
+        "Search real-world people, creators, staff, and production studios/companies (voice actors, seiyu, mangaka, authors, writers, directors, producers, illustrators, composers, actors) by keyword and career role.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.searchPersonsInputSchema,
       outputSchema: schemas.searchPersonsOutputSchema,
@@ -136,8 +139,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subjects",
     {
-      title: "浏览条目",
-      description: "按条目类型、子分类、年份、月份等条件分页浏览条目列表",
+      title: "Browse Media Catalog",
+      description:
+        "Browse and list media entries (anime, manga, books, music, games, live-action shows) with pagination, filtered by media type, subcategory (TV, movie, OVA, comic, novel, etc.), game platform, release year, month, and sort order (date or rank).",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getSubjectsInputSchema,
       outputSchema: schemas.getSubjectsOutputSchema,
@@ -155,8 +159,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_by_id",
     {
-      title: "获取条目详情",
-      description: "根据条目 ID 获取条目的详细信息",
+      title: "Get Media Entry Details",
+      description:
+        "Get detailed information about a specific media entry (anime, manga, book, music, game, or live-action show) by its ID, including title, summary, infobox metadata, episode/volume count, user ratings, rank, collection stats, and tags.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getSubjectByIdInputSchema,
       outputSchema: schemas.getSubjectByIdOutputSchema,
@@ -170,8 +175,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_image_by_id",
     {
-      title: "获取条目封面图",
-      description: "根据条目 ID 和尺寸类型获取条目封面图片",
+      title: "Get Media Cover Image",
+      description:
+        "Get the cover art or poster image of a media entry (anime, manga, book, music, game, or show) by its ID and image size.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getSubjectImageByIdInputSchema,
       outputSchema: schemas.getSubjectImageByIdOutputSchema,
@@ -188,8 +194,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_persons_by_subject_id",
     {
-      title: "获取条目关联人物",
-      description: "根据条目 ID 获取参与该条目的相关人物列表（制作人员、作者等）",
+      title: "Get Media Staff & Creators",
+      description:
+        "Get the production staff, creators, authors, directors, composers, and studios involved in a specific media entry (anime, manga, book, music, game, or show) by its ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedPersonsBySubjectIdInputSchema,
       outputSchema: schemas.getRelatedPersonsBySubjectIdOutputSchema,
@@ -205,8 +212,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_characters_by_subject_id",
     {
-      title: "获取条目关联角色",
-      description: "根据条目 ID 获取该条目登场的角色及配音列表",
+      title: "Get Media Characters & Voice Cast",
+      description:
+        "Get the list of fictional characters appearing in a media entry (anime, manga, book, game, or show) along with their voice actors (seiyu / cast) by media ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedCharactersBySubjectIdInputSchema,
       outputSchema: schemas.getRelatedCharactersBySubjectIdOutputSchema,
@@ -222,8 +230,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_subjects_by_subject_id",
     {
-      title: "获取关联条目",
-      description: "根据条目 ID 获取与之关联的其他条目列表（前传、续作、番外、原声集等）",
+      title: "Get Related Media Entries",
+      description:
+        "Get related media entries linked to a specific work (such as prequels, sequels, spin-offs, side stories, adaptations, anime/manga versions, or soundtracks/OSTs) by its ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedSubjectsBySubjectIdInputSchema,
       outputSchema: schemas.getRelatedSubjectsBySubjectIdOutputSchema,
@@ -239,8 +248,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episodes",
     {
-      title: "获取章节列表",
-      description: "根据条目 ID 分页获取章节（剧集/曲目）列表",
+      title: "Get Episodes or Tracks List",
+      description:
+        "Get a paginated list of episodes (for anime/shows) or tracks (for music albums) belonging to a media entry, optionally filtered by episode type (main story, special/OVA, OP, ED, PV/trailer, MAD).",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getEpisodesInputSchema,
       outputSchema: schemas.getEpisodesOutputSchema,
@@ -256,8 +266,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episode_by_id",
     {
-      title: "获取章节详情",
-      description: "根据章节 ID 获取单个章节的详细信息",
+      title: "Get Episode or Track Details",
+      description:
+        "Get detailed information about a single episode or music track by its episode ID, including title, air date, duration, and synopsis.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getEpisodeByIdInputSchema,
       outputSchema: schemas.getEpisodeByIdOutputSchema,
@@ -271,8 +282,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_by_id",
     {
-      title: "获取角色详情",
-      description: "根据角色 ID 获取角色的详细信息",
+      title: "Get Character Details",
+      description:
+        "Get detailed profile information about a fictional character by character ID, including name, biography/summary, gender, birthday, blood type, infobox attributes, and popularity stats.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getCharacterByIdInputSchema,
       outputSchema: schemas.getCharacterByIdOutputSchema,
@@ -288,8 +300,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_image_by_id",
     {
-      title: "获取角色肖像图",
-      description: "根据角色 ID 和尺寸类型获取角色肖像图片",
+      title: "Get Character Portrait Image",
+      description:
+        "Get the portrait or avatar image of a fictional character by character ID and image size.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getCharacterImageByIdInputSchema,
       outputSchema: schemas.getCharacterImageByIdOutputSchema,
@@ -306,8 +319,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_subjects_by_character_id",
     {
-      title: "获取角色出演条目",
-      description: "根据角色 ID 获取该角色登场的关联条目列表",
+      title: "Get Character Appearances in Media",
+      description:
+        "Get the list of media works (anime, manga, games, books) in which a fictional character appears, by character ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedSubjectsByCharacterIdInputSchema,
       outputSchema: schemas.getRelatedSubjectsByCharacterIdOutputSchema,
@@ -323,8 +337,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_persons_by_character_id",
     {
-      title: "获取角色关联人物",
-      description: "根据角色 ID 获取关联的现实人物列表（如声优、演员）",
+      title: "Get Character Voice Actors (Cast)",
+      description:
+        "Get the real-world voice actors (seiyu) or actors who portray a specific fictional character across different media works, by character ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedPersonsByCharacterIdInputSchema,
       outputSchema: schemas.getRelatedPersonsByCharacterIdOutputSchema,
@@ -340,8 +355,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "collect_character",
     {
-      title: "收藏角色",
-      description: "为当前登录用户收藏指定角色",
+      title: "Favorite / Bookmark Character",
+      description:
+        "Add a fictional character to the current authenticated user's favorites/bookmarks.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -362,8 +378,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "uncollect_character",
     {
-      title: "取消收藏角色",
-      description: "为当前登录用户取消收藏指定角色",
+      title: "Unfavorite / Remove Bookmarked Character",
+      description:
+        "Remove a fictional character from the current authenticated user's favorites/bookmarks.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -384,8 +401,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_by_id",
     {
-      title: "获取人物详情",
-      description: "根据人物 ID 获取现实人物或制作团体的详细信息",
+      title: "Get Staff, Creator, Voice Actor or Studio Details",
+      description:
+        "Get detailed profile information about a real-world person (voice actor/seiyu, author, mangaka, director, composer, staff) or production company/studio by person ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getPersonByIdInputSchema,
       outputSchema: schemas.getPersonByIdOutputSchema,
@@ -399,8 +417,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_image_by_id",
     {
-      title: "获取人物肖像图",
-      description: "根据人物 ID 和尺寸类型获取人物肖像图片",
+      title: "Get Staff, Creator or Studio Portrait Image",
+      description:
+        "Get the portrait photo or logo image of a real-world person or studio by person ID and image size.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getPersonImageByIdInputSchema,
       outputSchema: schemas.getPersonImageByIdOutputSchema,
@@ -417,8 +436,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_subjects_by_person_id",
     {
-      title: "获取人物参与条目",
-      description: "根据人物 ID 获取其参与制作、创作或出演的条目列表",
+      title: "Get Works by Staff, Creator or Studio",
+      description:
+        "Get the list of media works (anime, manga, books, music, games, shows) that a real-world person or studio has created, produced, directed, or participated in, by person ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedSubjectsByPersonIdInputSchema,
       outputSchema: schemas.getRelatedSubjectsByPersonIdOutputSchema,
@@ -434,8 +454,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_related_characters_by_person_id",
     {
-      title: "获取人物配音/出演角色",
-      description: "根据人物 ID 获取其配音或扮演的虚拟角色列表",
+      title: "Get Characters Voiced or Portrayed by Person",
+      description:
+        "Get the list of fictional characters voiced or portrayed by a specific voice actor (seiyu) or actor, by person ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getRelatedCharactersByPersonIdInputSchema,
       outputSchema: schemas.getRelatedCharactersByPersonIdOutputSchema,
@@ -451,8 +472,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "collect_person",
     {
-      title: "收藏人物",
-      description: "为当前登录用户收藏指定人物",
+      title: "Favorite / Bookmark Person or Studio",
+      description:
+        "Add a real-world person (voice actor, creator, staff) or studio to the current authenticated user's favorites/bookmarks.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -473,8 +495,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "uncollect_person",
     {
-      title: "取消收藏人物",
-      description: "为当前登录用户取消收藏指定人物",
+      title: "Unfavorite / Remove Bookmarked Person or Studio",
+      description:
+        "Remove a real-world person or studio from the current authenticated user's favorites/bookmarks.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -495,8 +518,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_by_name",
     {
-      title: "获取用户信息",
-      description: "根据用户名获取用户的公开个人资料",
+      title: "Get User Profile by Username",
+      description:
+        "Get a user's public profile information (nickname, avatar, bio/signature, user group) by their username.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserByNameInputSchema,
       outputSchema: schemas.getUserByNameOutputSchema,
@@ -508,8 +532,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_avatar_by_name",
     {
-      title: "获取用户头像",
-      description: "根据用户名和尺寸类型获取用户头像图片",
+      title: "Get User Avatar Image",
+      description: "Get a user's profile avatar image by their username and image size.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserAvatarByNameInputSchema,
       outputSchema: schemas.getUserAvatarByNameOutputSchema,
@@ -526,8 +550,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_me",
     {
-      title: "获取当前登录用户信息",
-      description: "获取当前授权登录用户的个人信息（包括 username、UID、昵称等）",
+      title: "Get Current Authenticated User Profile",
+      description:
+        "Get the profile information of the currently authenticated/logged-in user (including username, user ID, nickname, avatar, email, and registration time).",
       annotations: { readOnlyHint: true, openWorldHint: true },
       outputSchema: schemas.getMeOutputSchema,
     },
@@ -537,8 +562,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_collections",
     {
-      title: "获取用户条目收藏列表",
-      description: "分页获取指定用户的条目收藏列表（私有收藏仅本人可见）",
+      title: "Get User Watchlist & Media Library",
+      description:
+        "Get a paginated list of a user's tracked/collected media entries (watchlist, reading list, game library), optionally filtered by media type (anime, book, music, game, live-action) and watch/read status (wish/plan to watch, completed/watched, watching/doing, on hold, dropped).",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserCollectionsInputSchema,
       outputSchema: schemas.getUserCollectionsOutputSchema,
@@ -554,8 +580,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_collection",
     {
-      title: "获取用户单个条目收藏",
-      description: "获取指定用户对单个条目的收藏状态、评分及评论（私有收藏仅本人可见）",
+      title: "Get User Tracking Status & Rating for a Media Entry",
+      description:
+        "Get a user's tracking status (wish, completed, watching, on hold, dropped), personal rating score, review comment, tags, and episode/volume progress for a single media entry.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserCollectionInputSchema,
       outputSchema: schemas.getUserCollectionOutputSchema,
@@ -571,9 +598,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "post_user_collection",
     {
-      title: "新增或修改条目收藏",
+      title: "Add or Update Media in User Watchlist / Library",
       description:
-        "为当前登录用户新增或更新单个条目的收藏状态、评分、标签及评价（若未收藏则创建，已收藏则更新；ep_status 与 vol_status 仅适用于书籍类条目）",
+        "Add a media entry to the current user's watchlist/library or update its tracking status (wish, completed, watching, on hold, dropped), rating score (1-10), review comment, tags, and book chapter/volume progress (`ep_status` and `vol_status` apply only to books/manga).",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -595,9 +622,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "patch_user_collection",
     {
-      title: "更新条目收藏",
+      title: "Update Existing Media in User Watchlist / Library",
       description:
-        "更新当前登录用户对已收藏条目的状态、评分、标签或评价（ep_status 与 vol_status 仅适用于书籍类条目）",
+        "Update the current user's tracking status, rating score, review comment, tags, or book chapter/volume progress for an already collected media entry (`ep_status` and `vol_status` apply only to books/manga).",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -619,8 +646,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_subject_episode_collection",
     {
-      title: "获取条目章节收藏状态",
-      description: "分页获取当前登录用户在指定条目下的各章节（剧集）收藏状态",
+      title: "Get User Episode Watch Progress for a Show",
+      description:
+        "Get a paginated list of episodes and their watch status (unwatched, wish to watch, watched, dropped) for the current user under a specific anime or show.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserSubjectEpisodeCollectionInputSchema,
       outputSchema: schemas.getUserSubjectEpisodeCollectionOutputSchema,
@@ -636,9 +664,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "patch_user_subject_episode_collection",
     {
-      title: "批量更新条目章节收藏状态",
+      title: "Batch Update Episode Watch Status",
       description:
-        "批量更新当前登录用户在指定条目下多个章节的观看状态，并自动重新计算条目的完成进度",
+        "Batch update the current user's watch status (unwatched, wish, watched, dropped) for multiple episodes of a show and automatically recalculate overall watch progress.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -660,8 +688,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_episode_collection",
     {
-      title: "获取单个章节收藏状态",
-      description: "获取当前登录用户对指定章节的观看/收藏状态",
+      title: "Get Watch Status for a Single Episode",
+      description:
+        "Get the current user's watch status (unwatched, wish, watched, dropped) for a single episode by episode ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserEpisodeCollectionInputSchema,
       outputSchema: schemas.getUserEpisodeCollectionOutputSchema,
@@ -677,8 +706,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "put_user_episode_collection",
     {
-      title: "更新单个章节收藏状态",
-      description: "更新当前登录用户对指定章节的观看/收藏状态",
+      title: "Update Watch Status for a Single Episode",
+      description:
+        "Update the current user's watch status (unwatched, wish, watched, dropped) for a single episode by episode ID.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -700,8 +730,8 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_character_collections",
     {
-      title: "获取用户角色收藏列表",
-      description: "获取指定用户收藏的角色列表",
+      title: "Get User Favorite Characters List",
+      description: "Get the list of fictional characters bookmarked/favorited by a specific user.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserCharacterCollectionsInputSchema,
       outputSchema: schemas.getUserCharacterCollectionsOutputSchema,
@@ -717,8 +747,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_character_collection",
     {
-      title: "获取用户单个角色收藏信息",
-      description: "获取指定用户对单个角色的收藏信息",
+      title: "Check User Favorite Status for a Character",
+      description:
+        "Get details on whether and when a specific user bookmarked/favorited a single fictional character.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserCharacterCollectionInputSchema,
       outputSchema: schemas.getUserCharacterCollectionOutputSchema,
@@ -734,8 +765,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_person_collections",
     {
-      title: "获取用户人物收藏列表",
-      description: "获取指定用户收藏的现实人物列表",
+      title: "Get User Favorite Staff, Creators & Voice Actors List",
+      description:
+        "Get the list of real-world people (voice actors/seiyu, creators, staff) and studios bookmarked/favorited by a specific user.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserPersonCollectionsInputSchema,
       outputSchema: schemas.getUserPersonCollectionsOutputSchema,
@@ -751,8 +783,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_user_person_collection",
     {
-      title: "获取用户单个人物收藏信息",
-      description: "获取指定用户对单个人物的收藏信息",
+      title: "Check User Favorite Status for a Person or Studio",
+      description:
+        "Get details on whether and when a specific user bookmarked/favorited a single real-world person or studio.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getUserPersonCollectionInputSchema,
       outputSchema: schemas.getUserPersonCollectionOutputSchema,
@@ -768,8 +801,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_revisions",
     {
-      title: "获取人物历史修订列表",
-      description: "根据人物 ID 分页获取该人物词条的编辑历史列表",
+      title: "Get Person Wiki Edit History",
+      description:
+        "Get a paginated list of wiki edit revisions for a real-world person or studio entry by person ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getPersonRevisionsInputSchema,
       outputSchema: schemas.getPersonRevisionsOutputSchema,
@@ -785,8 +819,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_person_revision_by_id",
     {
-      title: "获取人物历史修订详情",
-      description: "根据修订版本 ID 获取人物词条单次修订的详细内容",
+      title: "Get Person Wiki Revision Details",
+      description:
+        "Get detailed content changes of a specific wiki edit revision for a person or studio by revision ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getPersonRevisionByIdInputSchema,
       outputSchema: schemas.getPersonRevisionByIdOutputSchema,
@@ -802,8 +837,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_revisions",
     {
-      title: "获取角色历史修订列表",
-      description: "根据角色 ID 分页获取该角色词条的编辑历史列表",
+      title: "Get Character Wiki Edit History",
+      description:
+        "Get a paginated list of wiki edit revisions for a fictional character entry by character ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getCharacterRevisionsInputSchema,
       outputSchema: schemas.getCharacterRevisionsOutputSchema,
@@ -819,8 +855,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_character_revision_by_id",
     {
-      title: "获取角色历史修订详情",
-      description: "根据修订版本 ID 获取角色词条单次修订的详细内容",
+      title: "Get Character Wiki Revision Details",
+      description:
+        "Get detailed content changes of a specific wiki edit revision for a fictional character by revision ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getCharacterRevisionByIdInputSchema,
       outputSchema: schemas.getCharacterRevisionByIdOutputSchema,
@@ -836,8 +873,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_revisions",
     {
-      title: "获取条目历史修订列表",
-      description: "根据条目 ID 分页获取该条目词条的编辑历史列表",
+      title: "Get Media Entry Wiki Edit History",
+      description:
+        "Get a paginated list of wiki edit revisions for a media entry (anime, manga, book, music, game, show) by media ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getSubjectRevisionsInputSchema,
       outputSchema: schemas.getSubjectRevisionsOutputSchema,
@@ -853,8 +891,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_subject_revision_by_id",
     {
-      title: "获取条目历史修订详情",
-      description: "根据修订版本 ID 获取条目词条单次修订的详细内容",
+      title: "Get Media Entry Wiki Revision Details",
+      description:
+        "Get detailed content changes of a specific wiki edit revision for a media entry by revision ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getSubjectRevisionByIdInputSchema,
       outputSchema: schemas.getSubjectRevisionByIdOutputSchema,
@@ -870,8 +909,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episode_revisions",
     {
-      title: "获取章节历史修订列表",
-      description: "根据章节 ID 分页获取该章节的编辑历史列表",
+      title: "Get Episode Wiki Edit History",
+      description:
+        "Get a paginated list of wiki edit revisions for an episode or track by episode ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getEpisodeRevisionsInputSchema,
       outputSchema: schemas.getEpisodeRevisionsOutputSchema,
@@ -887,8 +927,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_episode_revision_by_id",
     {
-      title: "获取章节历史修订详情",
-      description: "根据修订版本 ID 获取章节单次修订的详细内容",
+      title: "Get Episode Wiki Revision Details",
+      description:
+        "Get detailed content changes of a specific wiki edit revision for an episode or track by revision ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getEpisodeRevisionByIdInputSchema,
       outputSchema: schemas.getEpisodeRevisionByIdOutputSchema,
@@ -904,8 +945,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "new_index",
     {
-      title: "创建目录",
-      description: "为当前登录用户创建一个新目录",
+      title: "Create Curated List (Directory)",
+      description:
+        "Create a new user-curated list (directory / collection playlist) for the current authenticated user.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -920,8 +962,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_index_by_id",
     {
-      title: "获取目录详情",
-      description: "根据目录 ID 获取目录的基本信息",
+      title: "Get Curated List (Directory) Details",
+      description:
+        "Get metadata and details of a user-curated list (directory / collection playlist) by its list ID, including title, description, creator, and total items.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getIndexByIdInputSchema,
       outputSchema: schemas.getIndexByIdOutputSchema,
@@ -935,8 +978,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "edit_index_by_id",
     {
-      title: "编辑目录信息",
-      description: "修改指定目录的标题和描述",
+      title: "Update Curated List Title & Description",
+      description:
+        "Update the title and description of a user-curated list (directory / collection playlist) by list ID.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -958,11 +1002,12 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "get_index_subjects_by_index_id",
     {
-      title: "获取目录条目列表",
-      description: "根据目录 ID 分页获取该目录中收录的条目列表",
+      title: "Get Items in Curated List (Directory)",
+      description:
+        "Get a paginated list of media entries (anime, manga, books, music, games, shows) included in a user-curated list by list ID.",
       annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: schemas.getIndexSubjectsByIndexIdInputSchema,
-      // 上游此接口存在问题：https://github.com/bangumi/api/issues/243
+      // Upstream API issue: https://github.com/bangumi/api/issues/243
       outputSchema: schemas.getIndexSubjectsByIndexIdOutputSchema,
     },
     ({ index_id, type, limit, offset }) =>
@@ -976,8 +1021,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "add_subject_to_index",
     {
-      title: "向目录添加条目",
-      description: "向指定目录中添加一个条目",
+      title: "Add Media Entry to Curated List",
+      description:
+        "Add a media entry (anime, manga, book, music, game, show) to a user-curated list (directory) with an optional sort order and comment.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -999,8 +1045,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "edit_index_subject",
     {
-      title: "修改目录中的条目信息",
-      description: "修改目录中指定条目的排序权重或备注（若条目不存在于目录中则会创建）",
+      title: "Edit Media Entry in Curated List",
+      description:
+        "Update the sort order weight or comment of a media entry inside a user-curated list (creates the entry in the list if it does not already exist).",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1022,8 +1069,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "delete_subject_from_index",
     {
-      title: "从目录移除条目",
-      description: "从指定目录中删除某个条目",
+      title: "Remove Media Entry from Curated List",
+      description:
+        "Remove a media entry from a user-curated list (directory) by list ID and media ID.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -1044,8 +1092,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "collect_index",
     {
-      title: "收藏目录",
-      description: "为当前登录用户收藏指定目录",
+      title: "Favorite / Bookmark Curated List",
+      description:
+        "Add a user-curated list (directory) to the current authenticated user's favorites/bookmarks.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -1066,8 +1115,9 @@ export function registerApiTools(server: McpServer, client: BangumiClient): void
   server.registerTool(
     "uncollect_index",
     {
-      title: "取消收藏目录",
-      description: "为当前登录用户取消收藏指定目录",
+      title: "Unfavorite / Remove Bookmarked Curated List",
+      description:
+        "Remove a user-curated list (directory) from the current authenticated user's favorites/bookmarks.",
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,

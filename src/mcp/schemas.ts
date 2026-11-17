@@ -75,14 +75,14 @@ export const getCalendarOutputSchema = toStandardJsonSchema(
 
 export const searchSubjectsInputSchema = toStandardJsonSchema(
   v.object({
-    limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
-    offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-    keyword: v.pipe(v.string(), v.description("搜索关键词")),
+    limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Pagination limit"))),
+    offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Pagination offset"))),
+    keyword: v.pipe(v.string(), v.description("Search keyword")),
     sort: v.optional(
       v.pipe(
         v.picklist(["match", "heat", "rank", "score"]),
         v.description(
-          "排序规则：\n- `match`: 默认排序，按匹配程度\n- `heat`: 按收藏人数\n- `rank`: 按排名由高到低\n- `score`: 按评分",
+          "Sort order:\n- `match`: Default, by relevance match\n- `heat`: By number of users tracking/collecting\n- `rank`: By ranking (highest to lowest)\n- `score`: By rating score",
         ),
       ),
     ),
@@ -94,11 +94,13 @@ export const searchSubjectsInputSchema = toStandardJsonSchema(
               v.array(
                 v.pipe(
                   v.picklist([1, 2, 3, 4, 6]),
-                  v.description("条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元（无 5）"),
+                  v.description(
+                    "Media type: 1=Book/Manga/Novel, 2=Anime, 3=Music, 4=Game, 6=Live-action/Real (no 5)",
+                  ),
                 ),
               ),
               v.description(
-                "条目类型列表（1=书籍，2=动画，3=音乐，4=游戏，6=三次元），多值之间为「或」关系",
+                "Media types list (1=Book/Manga/Novel, 2=Anime, 3=Music, 4=Game, 6=Live-action/Real). Multiple values are combined with OR.",
               ),
             ),
           ),
@@ -106,51 +108,55 @@ export const searchSubjectsInputSchema = toStandardJsonSchema(
             v.pipe(
               v.array(v.string()),
               v.description(
-                "公共标签列表，多值之间为「且」关系。可用 `-` 前缀排除标签，例如 `-科幻`",
+                "Official meta tags list, combined with AND. Prefix with `-` to exclude a tag (e.g., `-科幻`).",
               ),
             ),
           ),
           tag: v.optional(
-            v.pipe(v.array(v.string()), v.description("标签列表，多值之间为「且」关系")),
+            v.pipe(v.array(v.string()), v.description("User tags list, combined with AND.")),
           ),
           air_date: v.optional(
             v.pipe(
               v.array(v.string()),
               v.description(
-                "播出/发售日期过滤条件（格式 `YYYY-MM-DD`，支持比较前缀如 `>=2020-07-01`、`<2020-10-01`），多值之间为「且」关系",
+                "Air/release date filter (`YYYY-MM-DD` with comparison prefix like `>=2020-07-01` or `<2020-10-01`), combined with AND.",
               ),
             ),
           ),
           rating: v.optional(
             v.pipe(
               v.array(v.string()),
-              v.description("评分过滤条件（支持比较前缀如 `>=6`、`<=8`），多值之间为「且」关系"),
+              v.description(
+                "Rating score filter (with comparison prefix like `>=6` or `<=8`), combined with AND.",
+              ),
             ),
           ),
           rating_count: v.optional(
             v.pipe(
               v.array(v.string()),
               v.description(
-                "评分人数过滤条件（支持比较前缀如 `>=200`、`<=5000`），多值之间为「且」关系",
+                "Rating vote count filter (with comparison prefix like `>=200` or `<=5000`), combined with AND.",
               ),
             ),
           ),
           rank: v.optional(
             v.pipe(
               v.array(v.string()),
-              v.description("排名过滤条件（支持比较前缀如 `>100`、`<=200`），多值之间为「且」关系"),
+              v.description(
+                "Ranking filter (with comparison prefix like `>100` or `<=200`), combined with AND.",
+              ),
             ),
           ),
           nsfw: v.optional(
             v.pipe(
               v.boolean(),
               v.description(
-                "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 条目；`false` 仅返回非 R18 条目（无权限用户忽略此字段，不会返回 R18）",
+                "NSFW/R18 filter: omit to include all; `true` for R18 only; `false` for non-R18 only (ignored for unprivileged users, who never receive R18 results).",
               ),
             ),
           ),
         }),
-        v.description("过滤条件，不同字段之间为「且」关系"),
+        v.description("Filter conditions, combined across fields with AND."),
       ),
     ),
   }),
@@ -227,9 +233,9 @@ export const searchSubjectsOutputSchema = toStandardJsonSchema(
 
 export const searchCharactersInputSchema = toStandardJsonSchema(
   v.object({
-    limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
-    offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-    keyword: v.pipe(v.string(), v.description("搜索关键词")),
+    limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Pagination limit"))),
+    offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Pagination offset"))),
+    keyword: v.pipe(v.string(), v.description("Search keyword")),
     filter: v.optional(
       v.pipe(
         v.object({
@@ -237,12 +243,12 @@ export const searchCharactersInputSchema = toStandardJsonSchema(
             v.pipe(
               v.boolean(),
               v.description(
-                "R18 过滤：不传表示包含所有结果；`true` 仅返回 R18 角色；`false` 仅返回非 R18 角色（无权限用户忽略此字段，不会返回 R18）",
+                "NSFW/R18 filter: omit to include all; `true` for R18 characters only; `false` for non-R18 characters only (ignored for unprivileged users).",
               ),
             ),
           ),
         }),
-        v.description("过滤条件，不同字段之间为「且」关系"),
+        v.description("Filter conditions, combined across fields with AND."),
       ),
     ),
   }),
@@ -282,9 +288,9 @@ export const searchCharactersOutputSchema = toStandardJsonSchema(
 
 export const searchPersonsInputSchema = toStandardJsonSchema(
   v.object({
-    limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页大小"))),
-    offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("分页偏移量"))),
-    keyword: v.pipe(v.string(), v.description("搜索关键词")),
+    limit: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Pagination limit"))),
+    offset: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Pagination offset"))),
+    keyword: v.pipe(v.string(), v.description("Search keyword")),
     filter: v.optional(
       v.pipe(
         v.object({
@@ -301,11 +307,11 @@ export const searchPersonsInputSchema = toStandardJsonSchema(
                   "actor",
                 ]),
               ),
-              v.description("职业过滤列表，多值之间为「且」关系"),
+              v.description("Career/role filter list, combined with AND."),
             ),
           ),
         }),
-        v.description("过滤条件，不同字段之间为「且」关系"),
+        v.description("Filter conditions, combined across fields with AND."),
       ),
     ),
   }),
@@ -343,43 +349,62 @@ export const getSubjectsInputSchema = toStandardJsonSchema(
   v.object({
     type: v.pipe(
       v.picklist([1, 2, 3, 4, 6]),
-      v.description("条目类型：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
+      v.description("Media type: 1=Book/Manga/Novel, 2=Anime, 3=Music, 4=Game, 6=Live-action/Real"),
     ),
     cat: v.optional(
       v.pipe(
         v.union([
           v.pipe(
             v.picklist([0, 1001, 1002, 1003]),
-            v.description("书籍分类：0=其他，1001=漫画，1002=小说，1003=画集"),
+            v.description(
+              "Book subcategory: 0=Other, 1001=Comic/Manga, 1002=Novel, 1003=Illustration/Artbook",
+            ),
           ),
           v.pipe(
             v.picklist([0, 1, 2, 3, 5]),
-            v.description("动画分类：0=其他，1=TV，2=OVA，3=Movie，5=WEB"),
+            v.description("Anime subcategory: 0=Other, 1=TV, 2=OVA, 3=Movie, 5=WEB"),
           ),
           v.pipe(
             v.picklist([0, 4001, 4003, 4002, 4005]),
-            v.description("游戏分类：0=其他，4001=游戏，4002=软件，4003=扩展包，4005=桌游"),
+            v.description(
+              "Game subcategory: 0=Other, 4001=Games, 4002=Software, 4003=DLC/Expansion, 4005=Tabletop",
+            ),
           ),
           v.pipe(
             v.picklist([0, 1, 2, 3, 6001, 6002, 6003, 6004]),
             v.description(
-              "三次元分类：0=其他，1=日剧，2=欧美剧，3=华语剧，6001=电视剧，6002=电影，6003=演出，6004=综艺",
+              "Live-action subcategory: 0=Other, 1=JP Drama, 2=Western/US-EU Drama, 3=Chinese Drama, 6001=TV Drama, 6002=Movie, 6003=Live/Performance, 6004=Variety Show",
             ),
           ),
         ]),
-        v.description("条目子分类（与 type 对应）"),
+        v.description("Media subcategory (must match `type`)"),
       ),
     ),
-    series: v.optional(v.pipe(v.boolean(), v.description("是否为系列条目（仅对书籍类型有效）"))),
-    platform: v.optional(v.pipe(v.string(), v.description("游戏平台（仅对游戏类型有效）"))),
-    sort: v.optional(v.pipe(v.picklist(["date", "rank"]), v.description("排序方式"))),
-    year: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("年份"))),
-    month: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("月份"))),
+    series: v.optional(
+      v.pipe(
+        v.boolean(),
+        v.description("Whether to filter for book series entries (only valid for Book type)"),
+      ),
+    ),
+    platform: v.optional(
+      v.pipe(v.string(), v.description("Game platform filter (only valid for Game type)")),
+    ),
+    sort: v.optional(
+      v.pipe(v.picklist(["date", "rank"]), v.description("Sort order (`date` or `rank`)")),
+    ),
+    year: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Release/air year"))),
+    month: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("Release/air month"))),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -455,7 +480,12 @@ export const getSubjectsOutputSchema = toStandardJsonSchema(
 
 export const getSubjectByIdInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Media entry ID (anime, manga, book, music, game, or show)"),
+    ),
   }),
 );
 
@@ -523,10 +553,10 @@ export const getSubjectByIdOutputSchema = toStandardJsonSchema(
 
 export const getSubjectImageByIdInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     type: v.pipe(
       v.picklist(["small", "grid", "large", "medium", "common"]),
-      v.description("图片尺寸"),
+      v.description("Image size"),
     ),
   }),
 );
@@ -537,7 +567,7 @@ export const getSubjectImageByIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedPersonsBySubjectIdInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
   }),
 );
 
@@ -568,7 +598,7 @@ export const getRelatedPersonsBySubjectIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedCharactersBySubjectIdInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
   }),
 );
 
@@ -624,7 +654,7 @@ export const getRelatedCharactersBySubjectIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedSubjectsBySubjectIdInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
   }),
 );
 
@@ -653,11 +683,13 @@ export const getRelatedSubjectsBySubjectIdOutputSchema = toStandardJsonSchema(
 
 export const getEpisodesInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     type: v.optional(
       v.pipe(
         v.picklist([0, 1, 2, 3, 4, 5, 6]),
-        v.description("章节类型：0=本篇，1=特别篇，2=OP，3=ED，4=预告/宣传/广告，5=MAD，6=其他"),
+        v.description(
+          "Episode type: 0=Main story, 1=Special/OVA, 2=OP (Opening), 3=ED (Ending), 4=PV/Trailer/Promo/Ad, 5=MAD, 6=Other",
+        ),
       ),
     ),
     limit: v.optional(
@@ -666,11 +698,11 @@ export const getEpisodesInputSchema = toStandardJsonSchema(
         v.safeInteger(),
         v.minValue(1),
         v.maxValue(200),
-        v.description("分页大小"),
+        v.description("Pagination limit (1-200)"),
       ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -701,7 +733,12 @@ export const getEpisodesOutputSchema = toStandardJsonSchema(
 
 export const getEpisodeByIdInputSchema = toStandardJsonSchema(
   v.object({
-    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
+    episode_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Episode or track ID"),
+    ),
   }),
 );
 
@@ -724,7 +761,12 @@ export const getEpisodeByIdOutputSchema = toStandardJsonSchema(
 
 export const getCharacterByIdInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
   }),
 );
 
@@ -755,8 +797,13 @@ export const getCharacterByIdOutputSchema = toStandardJsonSchema(
 
 export const getCharacterImageByIdInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
-    type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("图片尺寸")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
+    type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("Image size")),
   }),
 );
 
@@ -766,7 +813,12 @@ export const getCharacterImageByIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedSubjectsByCharacterIdInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
   }),
 );
 
@@ -788,7 +840,12 @@ export const getRelatedSubjectsByCharacterIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedPersonsByCharacterIdInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
   }),
 );
 
@@ -819,7 +876,12 @@ export const getRelatedPersonsByCharacterIdOutputSchema = toStandardJsonSchema(
 
 export const collectCharacterInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
   }),
 );
 
@@ -829,7 +891,12 @@ export const collectCharacterOutputSchema = toStandardJsonSchema(
 
 export const uncollectCharacterInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
   }),
 );
 
@@ -839,7 +906,12 @@ export const uncollectCharacterOutputSchema = toStandardJsonSchema(
 
 export const getPersonByIdInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
   }),
 );
 
@@ -874,8 +946,13 @@ export const getPersonByIdOutputSchema = toStandardJsonSchema(
 
 export const getPersonImageByIdInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
-    type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("图片尺寸")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
+    type: v.pipe(v.picklist(["small", "grid", "large", "medium"]), v.description("Image size")),
   }),
 );
 
@@ -885,7 +962,12 @@ export const getPersonImageByIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedSubjectsByPersonIdInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
   }),
 );
 
@@ -907,7 +989,12 @@ export const getRelatedSubjectsByPersonIdOutputSchema = toStandardJsonSchema(
 
 export const getRelatedCharactersByPersonIdInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or voice actor ID"),
+    ),
   }),
 );
 
@@ -938,7 +1025,12 @@ export const getRelatedCharactersByPersonIdOutputSchema = toStandardJsonSchema(
 
 export const collectPersonInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
   }),
 );
 
@@ -948,7 +1040,12 @@ export const collectPersonOutputSchema = toStandardJsonSchema(
 
 export const uncollectPersonInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
   }),
 );
 
@@ -960,7 +1057,7 @@ export const getUserByNameInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
   }),
 );
@@ -980,9 +1077,9 @@ export const getUserAvatarByNameInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
-    type: v.pipe(v.picklist(["small", "large", "medium"]), v.description("头像尺寸")),
+    type: v.pipe(v.picklist(["small", "large", "medium"]), v.description("Avatar image size")),
   }),
 );
 
@@ -1008,25 +1105,35 @@ export const getUserCollectionsInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
     subject_type: v.optional(
       v.pipe(
         v.picklist([1, 2, 3, 4, 6]),
-        v.description("条目类型筛选（默认全部）：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
+        v.description(
+          "Media type filter (defaults to all): 1=Book/Manga/Novel, 2=Anime, 3=Music, 4=Game, 6=Live-action/Real",
+        ),
       ),
     ),
     type: v.optional(
       v.pipe(
         v.picklist([1, 2, 3, 4, 5]),
-        v.description("收藏状态筛选（默认全部）：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
+        v.description(
+          "Tracking/watch status filter (defaults to all): 1=Wish (Plan to watch/read), 2=Collect (Completed/Watched), 3=Doing (Watching/Reading), 4=On hold, 5=Dropped",
+        ),
       ),
     ),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -1082,9 +1189,9 @@ export const getUserCollectionInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
   }),
 );
 
@@ -1128,11 +1235,13 @@ export const getUserCollectionOutputSchema = toStandardJsonSchema(
 
 export const postUserCollectionInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     type: v.optional(
       v.pipe(
         v.picklist([1, 2, 3, 4, 5]),
-        v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
+        v.description(
+          "Tracking/watch status: 1=Wish (Plan to watch/read), 2=Collect (Completed/Watched), 3=Doing (Watching/Reading), 4=On hold, 5=Dropped",
+        ),
       ),
     ),
     rate: v.optional(
@@ -1141,7 +1250,7 @@ export const postUserCollectionInputSchema = toStandardJsonSchema(
         v.safeInteger(),
         v.minValue(0),
         v.maxValue(10),
-        v.description("评分（1-10，`0` 表示删除评分）"),
+        v.description("Rating score (1-10, `0` removes the rating)"),
       ),
     ),
     ep_status: v.optional(
@@ -1149,7 +1258,7 @@ export const postUserCollectionInputSchema = toStandardJsonSchema(
         v.number(),
         v.safeInteger(),
         v.minValue(0),
-        v.description("看到的话数进度（仅适用于书籍类条目）"),
+        v.description("Chapters read progress (only applicable to Book/Manga entries)"),
       ),
     ),
     vol_status: v.optional(
@@ -1157,15 +1266,17 @@ export const postUserCollectionInputSchema = toStandardJsonSchema(
         v.number(),
         v.safeInteger(),
         v.minValue(0),
-        v.description("看到的卷数进度（仅适用于书籍类条目）"),
+        v.description("Volumes read progress (only applicable to Book/Manga entries)"),
       ),
     ),
-    comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
-    private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
+    comment: v.optional(v.pipe(v.string(), v.description("Short review / comment"))),
+    private: v.optional(v.pipe(v.boolean(), v.description("Whether visible only to yourself"))),
     tags: v.optional(
       v.pipe(
-        v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
-        v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
+        v.array(v.pipe(v.string(), v.description("Single tag (must not contain spaces)"))),
+        v.description(
+          "Tags list (omit to leave unchanged; pass empty array `[]` to clear all tags)",
+        ),
       ),
     ),
   }),
@@ -1177,11 +1288,13 @@ export const postUserCollectionOutputSchema = toStandardJsonSchema(
 
 export const patchUserCollectionInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     type: v.optional(
       v.pipe(
         v.picklist([1, 2, 3, 4, 5]),
-        v.description("收藏状态：1=想看，2=看过，3=在看，4=搁置，5=抛弃"),
+        v.description(
+          "Tracking/watch status: 1=Wish (Plan to watch/read), 2=Collect (Completed/Watched), 3=Doing (Watching/Reading), 4=On hold, 5=Dropped",
+        ),
       ),
     ),
     rate: v.optional(
@@ -1190,7 +1303,7 @@ export const patchUserCollectionInputSchema = toStandardJsonSchema(
         v.safeInteger(),
         v.minValue(0),
         v.maxValue(10),
-        v.description("评分（1-10，`0` 表示删除评分）"),
+        v.description("Rating score (1-10, `0` removes the rating)"),
       ),
     ),
     ep_status: v.optional(
@@ -1198,7 +1311,7 @@ export const patchUserCollectionInputSchema = toStandardJsonSchema(
         v.number(),
         v.safeInteger(),
         v.minValue(0),
-        v.description("看到的话数进度（仅适用于书籍类条目）"),
+        v.description("Chapters read progress (only applicable to Book/Manga entries)"),
       ),
     ),
     vol_status: v.optional(
@@ -1206,15 +1319,17 @@ export const patchUserCollectionInputSchema = toStandardJsonSchema(
         v.number(),
         v.safeInteger(),
         v.minValue(0),
-        v.description("看到的卷数进度（仅适用于书籍类条目）"),
+        v.description("Volumes read progress (only applicable to Book/Manga entries)"),
       ),
     ),
-    comment: v.optional(v.pipe(v.string(), v.description("简评/吐嘈"))),
-    private: v.optional(v.pipe(v.boolean(), v.description("是否仅自己可见"))),
+    comment: v.optional(v.pipe(v.string(), v.description("Short review / comment"))),
+    private: v.optional(v.pipe(v.boolean(), v.description("Whether visible only to yourself"))),
     tags: v.optional(
       v.pipe(
-        v.array(v.pipe(v.string(), v.description("单个标签（不能包含空格）"))),
-        v.description("标签列表（不传则忽略，传空数组 `[]` 会清空所有标签）"),
+        v.array(v.pipe(v.string(), v.description("Single tag (must not contain spaces)"))),
+        v.description(
+          "Tags list (omit to leave unchanged; pass empty array `[]` to clear all tags)",
+        ),
       ),
     ),
   }),
@@ -1226,9 +1341,9 @@ export const patchUserCollectionOutputSchema = toStandardJsonSchema(
 
 export const getUserSubjectEpisodeCollectionInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
     limit: v.optional(
       v.pipe(
@@ -1236,14 +1351,14 @@ export const getUserSubjectEpisodeCollectionInputSchema = toStandardJsonSchema(
         v.safeInteger(),
         v.minValue(1),
         v.maxValue(1000),
-        v.description("分页大小"),
+        v.description("Pagination limit (1-1000)"),
       ),
     ),
     episode_type: v.optional(
       v.pipe(
         v.picklist([0, 1, 2, 3, 4, 5, 6]),
         v.description(
-          "章节类型筛选（不传则不过滤）：0=本篇，1=特别篇，2=OP，3=ED，4=预告/宣传/广告，5=MAD，6=其他",
+          "Episode type filter (omit for all): 0=Main story, 1=Special/OVA, 2=OP, 3=ED, 4=PV/Trailer/Promo, 5=MAD, 6=Other",
         ),
       ),
     ),
@@ -1282,14 +1397,16 @@ export const getUserSubjectEpisodeCollectionOutputSchema = toStandardJsonSchema(
 
 export const patchUserSubjectEpisodeCollectionInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     episode_id: v.pipe(
       v.array(v.pipe(v.number(), v.safeInteger())),
-      v.description("要更新的章节 ID 列表"),
+      v.description("List of episode IDs to update"),
     ),
     type: v.pipe(
       v.picklist([0, 1, 2, 3]),
-      v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
+      v.description(
+        "Episode watch status: 0=Unwatched/Uncollected, 1=Wish to watch, 2=Watched, 3=Dropped",
+      ),
     ),
   }),
 );
@@ -1300,7 +1417,7 @@ export const patchUserSubjectEpisodeCollectionOutputSchema = toStandardJsonSchem
 
 export const getUserEpisodeCollectionInputSchema = toStandardJsonSchema(
   v.object({
-    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
+    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Episode ID")),
   }),
 );
 
@@ -1327,10 +1444,12 @@ export const getUserEpisodeCollectionOutputSchema = toStandardJsonSchema(
 
 export const putUserEpisodeCollectionInputSchema = toStandardJsonSchema(
   v.object({
-    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
+    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Episode ID")),
     type: v.pipe(
       v.picklist([0, 1, 2, 3]),
-      v.description("章节收藏状态：0=未收藏，1=想看，2=看过，3=抛弃"),
+      v.description(
+        "Episode watch status: 0=Unwatched/Uncollected, 1=Wish to watch, 2=Watched, 3=Dropped",
+      ),
     ),
   }),
 );
@@ -1343,7 +1462,7 @@ export const getUserCharacterCollectionsInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
   }),
 );
@@ -1376,9 +1495,14 @@ export const getUserCharacterCollectionInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
   }),
 );
 
@@ -1403,7 +1527,7 @@ export const getUserPersonCollectionsInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
   }),
 );
@@ -1439,9 +1563,14 @@ export const getUserPersonCollectionInputSchema = toStandardJsonSchema(
   v.object({
     username: v.pipe(
       v.string(),
-      v.description("用户名（若该用户已设置自定义用户名，则不可使用数字 UID）"),
+      v.description("Username (numeric UID cannot be used if the user has set a custom username)"),
     ),
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
   }),
 );
 
@@ -1467,12 +1596,23 @@ export const getUserPersonCollectionOutputSchema = toStandardJsonSchema(
 
 export const getPersonRevisionsInputSchema = toStandardJsonSchema(
   v.object({
-    person_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("人物 ID")),
+    person_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Person or studio ID"),
+    ),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -1500,7 +1640,7 @@ export const getPersonRevisionByIdInputSchema = toStandardJsonSchema(
       v.number(),
       v.safeInteger(),
       v.minValue(1),
-      v.description("历史修订版本 ID"),
+      v.description("Wiki revision ID"),
     ),
   }),
 );
@@ -1537,12 +1677,23 @@ export const getPersonRevisionByIdOutputSchema = toStandardJsonSchema(
 
 export const getCharacterRevisionsInputSchema = toStandardJsonSchema(
   v.object({
-    character_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("角色 ID")),
+    character_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Fictional character ID"),
+    ),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -1570,7 +1721,7 @@ export const getCharacterRevisionByIdInputSchema = toStandardJsonSchema(
       v.number(),
       v.safeInteger(),
       v.minValue(1),
-      v.description("历史修订版本 ID"),
+      v.description("Wiki revision ID"),
     ),
   }),
 );
@@ -1598,12 +1749,18 @@ export const getCharacterRevisionByIdOutputSchema = toStandardJsonSchema(
 
 export const getSubjectRevisionsInputSchema = toStandardJsonSchema(
   v.object({
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -1631,7 +1788,7 @@ export const getSubjectRevisionByIdInputSchema = toStandardJsonSchema(
       v.number(),
       v.safeInteger(),
       v.minValue(1),
-      v.description("历史修订版本 ID"),
+      v.description("Wiki revision ID"),
     ),
   }),
 );
@@ -1662,12 +1819,18 @@ export const getSubjectRevisionByIdOutputSchema = toStandardJsonSchema(
 
 export const getEpisodeRevisionsInputSchema = toStandardJsonSchema(
   v.object({
-    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("章节 ID")),
+    episode_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Episode ID")),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -1695,7 +1858,7 @@ export const getEpisodeRevisionByIdInputSchema = toStandardJsonSchema(
       v.number(),
       v.safeInteger(),
       v.minValue(1),
-      v.description("历史修订版本 ID"),
+      v.description("Wiki revision ID"),
     ),
   }),
 );
@@ -1708,7 +1871,10 @@ export const getEpisodeRevisionByIdOutputSchema = toStandardJsonSchema(
     summary: v.string(),
     created_at: v.string(),
     data: v.optional(
-      v.pipe(v.record(v.string(), v.unknown()), v.description("编辑修改内容，响应类型不固定")),
+      v.pipe(
+        v.record(v.string(), v.unknown()),
+        v.description("Revision content changes (dynamic schema)"),
+      ),
     ),
   }),
 );
@@ -1730,7 +1896,12 @@ export const newIndexOutputSchema = toStandardJsonSchema(
 
 export const getIndexByIdInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
   }),
 );
 
@@ -1751,9 +1922,14 @@ export const getIndexByIdOutputSchema = toStandardJsonSchema(
 
 export const editIndexByIdInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-    title: v.optional(v.pipe(v.string(), v.description("目录标题"))),
-    description: v.optional(v.pipe(v.string(), v.description("目录描述"))),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
+    title: v.optional(v.pipe(v.string(), v.description("Curated list title"))),
+    description: v.optional(v.pipe(v.string(), v.description("Curated list description"))),
   }),
 );
 
@@ -1774,18 +1950,31 @@ export const editIndexByIdOutputSchema = toStandardJsonSchema(
 
 export const getIndexSubjectsByIndexIdInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
     type: v.optional(
       v.pipe(
         v.picklist([1, 2, 3, 4, 6]),
-        v.description("条目类型筛选：1=书籍，2=动画，3=音乐，4=游戏，6=三次元"),
+        v.description(
+          "Media type filter: 1=Book/Manga/Novel, 2=Anime, 3=Music, 4=Game, 6=Live-action/Real",
+        ),
       ),
     ),
     limit: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.maxValue(50), v.description("分页大小")),
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.minValue(1),
+        v.maxValue(50),
+        v.description("Pagination limit (1-50)"),
+      ),
     ),
     offset: v.optional(
-      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("分页偏移量")),
+      v.pipe(v.number(), v.safeInteger(), v.minValue(0), v.description("Pagination offset")),
     ),
   }),
 );
@@ -1801,10 +1990,23 @@ export const getIndexSubjectsByIndexIdOutputSchema = toStandardJsonSchema(
 
 export const addSubjectToIndexInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-    subject_id: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("要添加的条目 ID"))),
-    sort: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前"))),
-    comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
+    subject_id: v.optional(
+      v.pipe(v.number(), v.safeInteger(), v.description("Media entry ID to add")),
+    ),
+    sort: v.optional(
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.description("Sort order weight (smaller values appear first)"),
+      ),
+    ),
+    comment: v.optional(v.pipe(v.string(), v.description("Note or comment on the item"))),
   }),
 );
 
@@ -1814,10 +2016,21 @@ export const addSubjectToIndexOutputSchema = toStandardJsonSchema(
 
 export const editIndexSubjectInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
-    sort: v.optional(v.pipe(v.number(), v.safeInteger(), v.description("排序权重，越小越靠前"))),
-    comment: v.optional(v.pipe(v.string(), v.description("评价或备注"))),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
+    sort: v.optional(
+      v.pipe(
+        v.number(),
+        v.safeInteger(),
+        v.description("Sort order weight (smaller values appear first)"),
+      ),
+    ),
+    comment: v.optional(v.pipe(v.string(), v.description("Note or comment on the item"))),
   }),
 );
 
@@ -1827,8 +2040,13 @@ export const editIndexSubjectOutputSchema = toStandardJsonSchema(
 
 export const deleteSubjectFromIndexInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
-    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("条目 ID")),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
+    subject_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("Media entry ID")),
   }),
 );
 
@@ -1838,7 +2056,12 @@ export const deleteSubjectFromIndexOutputSchema = toStandardJsonSchema(
 
 export const collectIndexInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
   }),
 );
 
@@ -1848,7 +2071,12 @@ export const collectIndexOutputSchema = toStandardJsonSchema(
 
 export const uncollectIndexInputSchema = toStandardJsonSchema(
   v.object({
-    index_id: v.pipe(v.number(), v.safeInteger(), v.minValue(1), v.description("目录 ID")),
+    index_id: v.pipe(
+      v.number(),
+      v.safeInteger(),
+      v.minValue(1),
+      v.description("Curated list (directory) ID"),
+    ),
   }),
 );
 
