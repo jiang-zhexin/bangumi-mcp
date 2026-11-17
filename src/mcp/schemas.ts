@@ -177,7 +177,7 @@ export const searchSubjectsOutputSchema = toStandardJsonSchema(
         series: v.boolean(),
         nsfw: v.boolean(),
         locked: v.boolean(),
-        date: v.optional(v.string()),
+        date: v.nullish(v.string()),
         platform: v.string(),
         images: v.object({
           large: v.string(),
@@ -264,7 +264,7 @@ export const searchCharactersOutputSchema = toStandardJsonSchema(
         id: v.number(),
         name: v.string(),
         type: v.picklist([1, 2, 3, 4]),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -274,12 +274,12 @@ export const searchCharactersOutputSchema = toStandardJsonSchema(
         ),
         summary: v.string(),
         locked: v.boolean(),
-        infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
-        gender: v.optional(v.string()),
-        blood_type: v.optional(v.picklist([1, 2, 3, 4])),
-        birth_year: v.optional(v.number()),
-        birth_mon: v.optional(v.number()),
-        birth_day: v.optional(v.number()),
+        infobox: v.nullish(v.array(v.record(v.string(), v.unknown()))),
+        gender: v.nullish(v.string()),
+        blood_type: v.nullish(v.picklist([1, 2, 3, 4])),
+        birth_year: v.nullish(v.number()),
+        birth_mon: v.nullish(v.number()),
+        birth_day: v.nullish(v.number()),
         stat: v.object({ comments: v.number(), collects: v.number() }),
       }),
     ),
@@ -330,7 +330,7 @@ export const searchPersonsOutputSchema = toStandardJsonSchema(
         career: v.array(
           v.picklist(["producer", "mangaka", "artist", "seiyu", "writer", "illustrator", "actor"]),
         ),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -424,7 +424,7 @@ export const getSubjectsOutputSchema = toStandardJsonSchema(
         series: v.boolean(),
         nsfw: v.boolean(),
         locked: v.boolean(),
-        date: v.optional(v.string()),
+        date: v.nullish(v.string()),
         platform: v.string(),
         images: v.object({
           large: v.string(),
@@ -499,7 +499,7 @@ export const getSubjectByIdOutputSchema = toStandardJsonSchema(
     series: v.boolean(),
     nsfw: v.boolean(),
     locked: v.boolean(),
-    date: v.optional(v.string()),
+    date: v.nullish(v.string()),
     platform: v.string(),
     images: v.object({
       large: v.string(),
@@ -581,7 +581,7 @@ export const getRelatedPersonsBySubjectIdOutputSchema = toStandardJsonSchema(
         career: v.array(
           v.picklist(["producer", "mangaka", "artist", "seiyu", "writer", "illustrator", "actor"]),
         ),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -610,7 +610,7 @@ export const getRelatedCharactersBySubjectIdOutputSchema = toStandardJsonSchema(
         name: v.string(),
         summary: v.string(),
         type: v.picklist([1, 2, 3, 4]),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -635,7 +635,7 @@ export const getRelatedCharactersBySubjectIdOutputSchema = toStandardJsonSchema(
                 "actor",
               ]),
             ),
-            images: v.optional(
+            images: v.nullish(
               v.object({
                 large: v.string(),
                 medium: v.string(),
@@ -775,7 +775,7 @@ export const getCharacterByIdOutputSchema = toStandardJsonSchema(
     id: v.number(),
     name: v.string(),
     type: v.picklist([1, 2, 3, 4]),
-    images: v.optional(
+    images: v.nullish(
       v.object({
         large: v.string(),
         medium: v.string(),
@@ -785,12 +785,12 @@ export const getCharacterByIdOutputSchema = toStandardJsonSchema(
     ),
     summary: v.string(),
     locked: v.boolean(),
-    infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
-    gender: v.optional(v.string()),
-    blood_type: v.optional(v.picklist([1, 2, 3, 4])),
-    birth_year: v.optional(v.number()),
-    birth_mon: v.optional(v.number()),
-    birth_day: v.optional(v.number()),
+    infobox: v.nullish(v.array(v.record(v.string(), v.unknown()))),
+    gender: v.nullish(v.string()),
+    blood_type: v.nullish(v.picklist([1, 2, 3, 4])),
+    birth_year: v.nullish(v.number()),
+    birth_mon: v.nullish(v.number()),
+    birth_day: v.nullish(v.number()),
     stat: v.object({ comments: v.number(), collects: v.number() }),
   }),
 );
@@ -856,7 +856,7 @@ export const getRelatedPersonsByCharacterIdOutputSchema = toStandardJsonSchema(
         id: v.number(),
         name: v.string(),
         type: v.picklist([1, 2, 3, 4]),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -923,7 +923,7 @@ export const getPersonByIdOutputSchema = toStandardJsonSchema(
     career: v.array(
       v.picklist(["producer", "mangaka", "artist", "seiyu", "writer", "illustrator", "actor"]),
     ),
-    images: v.optional(
+    images: v.nullish(
       v.object({
         large: v.string(),
         medium: v.string(),
@@ -934,12 +934,12 @@ export const getPersonByIdOutputSchema = toStandardJsonSchema(
     summary: v.string(),
     locked: v.boolean(),
     last_modified: v.string(),
-    infobox: v.optional(v.array(v.record(v.string(), v.unknown()))),
-    gender: v.optional(v.string()),
-    blood_type: v.optional(v.picklist([1, 2, 3, 4])),
-    birth_year: v.optional(v.number()),
-    birth_mon: v.optional(v.number()),
-    birth_day: v.optional(v.number()),
+    infobox: v.nullish(v.array(v.record(v.string(), v.unknown()))),
+    gender: v.nullish(v.string()),
+    blood_type: v.nullish(v.picklist([1, 2, 3, 4])),
+    birth_year: v.nullish(v.number()),
+    birth_mon: v.nullish(v.number()),
+    birth_day: v.nullish(v.number()),
     stat: v.object({ comments: v.number(), collects: v.number() }),
   }),
 );
@@ -1005,7 +1005,7 @@ export const getRelatedCharactersByPersonIdOutputSchema = toStandardJsonSchema(
         id: v.number(),
         name: v.string(),
         type: v.picklist([1, 2, 3, 4]),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -1162,7 +1162,7 @@ export const getUserCollectionsOutputSchema = toStandardJsonSchema(
             name: v.string(),
             name_cn: v.string(),
             short_summary: v.string(),
-            date: v.optional(v.string()),
+            date: v.nullish(v.string()),
             images: v.object({
               large: v.string(),
               common: v.string(),
@@ -1214,7 +1214,7 @@ export const getUserCollectionOutputSchema = toStandardJsonSchema(
         name: v.string(),
         name_cn: v.string(),
         short_summary: v.string(),
-        date: v.optional(v.string()),
+        date: v.nullish(v.string()),
         images: v.object({
           large: v.string(),
           common: v.string(),
@@ -1477,7 +1477,7 @@ export const getUserCharacterCollectionsOutputSchema = toStandardJsonSchema(
         id: v.number(),
         name: v.string(),
         type: v.picklist([1, 2, 3, 4]),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -1511,7 +1511,7 @@ export const getUserCharacterCollectionOutputSchema = toStandardJsonSchema(
     id: v.number(),
     name: v.string(),
     type: v.picklist([1, 2, 3, 4]),
-    images: v.optional(
+    images: v.nullish(
       v.object({
         large: v.string(),
         medium: v.string(),
@@ -1545,7 +1545,7 @@ export const getUserPersonCollectionsOutputSchema = toStandardJsonSchema(
         career: v.array(
           v.picklist(["producer", "mangaka", "artist", "seiyu", "writer", "illustrator", "actor"]),
         ),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             medium: v.string(),
@@ -1582,7 +1582,7 @@ export const getUserPersonCollectionOutputSchema = toStandardJsonSchema(
     career: v.array(
       v.picklist(["producer", "mangaka", "artist", "seiyu", "writer", "illustrator", "actor"]),
     ),
-    images: v.optional(
+    images: v.nullish(
       v.object({
         large: v.string(),
         medium: v.string(),
