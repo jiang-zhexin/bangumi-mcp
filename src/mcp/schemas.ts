@@ -5,64 +5,64 @@ export const getCalendarOutputSchema = toStandardJsonSchema(
   v.object({
     data: v.array(
       v.object({
-        weekday: v.optional(
+        weekday: v.nullish(
           v.object({
-            en: v.optional(v.string()),
-            cn: v.optional(v.string()),
-            ja: v.optional(v.string()),
-            id: v.optional(v.number()),
+            en: v.nullish(v.string()),
+            cn: v.nullish(v.string()),
+            ja: v.nullish(v.string()),
+            id: v.nullish(v.number()),
           }),
         ),
-        items: v.optional(
+        items: v.nullish(
           v.array(
             v.object({
-              id: v.optional(v.number()),
-              url: v.optional(v.string()),
-              type: v.optional(v.picklist([1, 2, 3, 4, 6])),
-              name: v.optional(v.string()),
-              name_cn: v.optional(v.string()),
-              summary: v.optional(v.string()),
-              air_date: v.optional(v.string()),
-              air_weekday: v.optional(v.number()),
-              images: v.optional(
+              id: v.nullish(v.number()),
+              url: v.nullish(v.string()),
+              type: v.nullish(v.picklist([1, 2, 3, 4, 6])),
+              name: v.nullish(v.string()),
+              name_cn: v.nullish(v.string()),
+              summary: v.nullish(v.string()),
+              air_date: v.nullish(v.string()),
+              air_weekday: v.nullish(v.number()),
+              images: v.nullish(
                 v.object({
-                  large: v.optional(v.string()),
-                  common: v.optional(v.string()),
-                  medium: v.optional(v.string()),
-                  small: v.optional(v.string()),
-                  grid: v.optional(v.string()),
+                  large: v.nullish(v.string()),
+                  common: v.nullish(v.string()),
+                  medium: v.nullish(v.string()),
+                  small: v.nullish(v.string()),
+                  grid: v.nullish(v.string()),
                 }),
               ),
-              eps: v.optional(v.number()),
-              eps_count: v.optional(v.number()),
-              rating: v.optional(
+              eps: v.nullish(v.number()),
+              eps_count: v.nullish(v.number()),
+              rating: v.nullish(
                 v.object({
-                  total: v.optional(v.number()),
-                  score: v.optional(v.number()),
-                  count: v.optional(
+                  total: v.nullish(v.number()),
+                  score: v.nullish(v.number()),
+                  count: v.nullish(
                     v.object({
-                      "1": v.optional(v.number()),
-                      "2": v.optional(v.number()),
-                      "3": v.optional(v.number()),
-                      "4": v.optional(v.number()),
-                      "5": v.optional(v.number()),
-                      "6": v.optional(v.number()),
-                      "7": v.optional(v.number()),
-                      "8": v.optional(v.number()),
-                      "9": v.optional(v.number()),
-                      "10": v.optional(v.number()),
+                      "1": v.nullish(v.number()),
+                      "2": v.nullish(v.number()),
+                      "3": v.nullish(v.number()),
+                      "4": v.nullish(v.number()),
+                      "5": v.nullish(v.number()),
+                      "6": v.nullish(v.number()),
+                      "7": v.nullish(v.number()),
+                      "8": v.nullish(v.number()),
+                      "9": v.nullish(v.number()),
+                      "10": v.nullish(v.number()),
                     }),
                   ),
                 }),
               ),
-              rank: v.optional(v.number()),
-              collection: v.optional(
+              rank: v.nullish(v.number()),
+              collection: v.nullish(
                 v.object({
-                  wish: v.optional(v.number()),
-                  collect: v.optional(v.number()),
-                  doing: v.optional(v.number()),
-                  on_hold: v.optional(v.number()),
-                  dropped: v.optional(v.number()),
+                  wish: v.nullish(v.number()),
+                  collect: v.nullish(v.number()),
+                  doing: v.nullish(v.number()),
+                  on_hold: v.nullish(v.number()),
+                  dropped: v.nullish(v.number()),
                 }),
               ),
             }),
@@ -186,13 +186,13 @@ export const searchSubjectsOutputSchema = toStandardJsonSchema(
           small: v.string(),
           grid: v.string(),
         }),
-        infobox: v.optional(
+        infobox: v.nullish(
           v.array(
             v.object({
               key: v.string(),
               value: v.union([
                 v.string(),
-                v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
+                v.array(v.object({ k: v.nullish(v.string()), v: v.string() })),
               ]),
             }),
           ),
@@ -205,16 +205,16 @@ export const searchSubjectsOutputSchema = toStandardJsonSchema(
           total: v.number(),
           score: v.number(),
           count: v.object({
-            "1": v.optional(v.number()),
-            "2": v.optional(v.number()),
-            "3": v.optional(v.number()),
-            "4": v.optional(v.number()),
-            "5": v.optional(v.number()),
-            "6": v.optional(v.number()),
-            "7": v.optional(v.number()),
-            "8": v.optional(v.number()),
-            "9": v.optional(v.number()),
-            "10": v.optional(v.number()),
+            "1": v.nullish(v.number()),
+            "2": v.nullish(v.number()),
+            "3": v.nullish(v.number()),
+            "4": v.nullish(v.number()),
+            "5": v.nullish(v.number()),
+            "6": v.nullish(v.number()),
+            "7": v.nullish(v.number()),
+            "8": v.nullish(v.number()),
+            "9": v.nullish(v.number()),
+            "10": v.nullish(v.number()),
           }),
         }),
         collection: v.object({
@@ -433,13 +433,13 @@ export const getSubjectsOutputSchema = toStandardJsonSchema(
           small: v.string(),
           grid: v.string(),
         }),
-        infobox: v.optional(
+        infobox: v.nullish(
           v.array(
             v.object({
               key: v.string(),
               value: v.union([
                 v.string(),
-                v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
+                v.array(v.object({ k: v.nullish(v.string()), v: v.string() })),
               ]),
             }),
           ),
@@ -452,16 +452,16 @@ export const getSubjectsOutputSchema = toStandardJsonSchema(
           total: v.number(),
           score: v.number(),
           count: v.object({
-            "1": v.optional(v.number()),
-            "2": v.optional(v.number()),
-            "3": v.optional(v.number()),
-            "4": v.optional(v.number()),
-            "5": v.optional(v.number()),
-            "6": v.optional(v.number()),
-            "7": v.optional(v.number()),
-            "8": v.optional(v.number()),
-            "9": v.optional(v.number()),
-            "10": v.optional(v.number()),
+            "1": v.nullish(v.number()),
+            "2": v.nullish(v.number()),
+            "3": v.nullish(v.number()),
+            "4": v.nullish(v.number()),
+            "5": v.nullish(v.number()),
+            "6": v.nullish(v.number()),
+            "7": v.nullish(v.number()),
+            "8": v.nullish(v.number()),
+            "9": v.nullish(v.number()),
+            "10": v.nullish(v.number()),
           }),
         }),
         collection: v.object({
@@ -508,13 +508,13 @@ export const getSubjectByIdOutputSchema = toStandardJsonSchema(
       small: v.string(),
       grid: v.string(),
     }),
-    infobox: v.optional(
+    infobox: v.nullish(
       v.array(
         v.object({
           key: v.string(),
           value: v.union([
             v.string(),
-            v.array(v.object({ k: v.optional(v.string()), v: v.string() })),
+            v.array(v.object({ k: v.nullish(v.string()), v: v.string() })),
           ]),
         }),
       ),
@@ -527,16 +527,16 @@ export const getSubjectByIdOutputSchema = toStandardJsonSchema(
       total: v.number(),
       score: v.number(),
       count: v.object({
-        "1": v.optional(v.number()),
-        "2": v.optional(v.number()),
-        "3": v.optional(v.number()),
-        "4": v.optional(v.number()),
-        "5": v.optional(v.number()),
-        "6": v.optional(v.number()),
-        "7": v.optional(v.number()),
-        "8": v.optional(v.number()),
-        "9": v.optional(v.number()),
-        "10": v.optional(v.number()),
+        "1": v.nullish(v.number()),
+        "2": v.nullish(v.number()),
+        "3": v.nullish(v.number()),
+        "4": v.nullish(v.number()),
+        "5": v.nullish(v.number()),
+        "6": v.nullish(v.number()),
+        "7": v.nullish(v.number()),
+        "8": v.nullish(v.number()),
+        "9": v.nullish(v.number()),
+        "10": v.nullish(v.number()),
       }),
     }),
     collection: v.object({
@@ -666,7 +666,7 @@ export const getRelatedSubjectsBySubjectIdOutputSchema = toStandardJsonSchema(
         type: v.number(),
         name: v.string(),
         name_cn: v.string(),
-        images: v.optional(
+        images: v.nullish(
           v.object({
             large: v.string(),
             common: v.string(),
@@ -719,13 +719,13 @@ export const getEpisodesOutputSchema = toStandardJsonSchema(
         name: v.string(),
         name_cn: v.string(),
         sort: v.number(),
-        ep: v.optional(v.number()),
+        ep: v.nullish(v.number()),
         airdate: v.string(),
         comment: v.number(),
         duration: v.string(),
         desc: v.string(),
         disc: v.number(),
-        duration_seconds: v.optional(v.number()),
+        duration_seconds: v.nullish(v.number()),
       }),
     ),
   }),
@@ -749,7 +749,7 @@ export const getEpisodeByIdOutputSchema = toStandardJsonSchema(
     name: v.string(),
     name_cn: v.string(),
     sort: v.number(),
-    ep: v.optional(v.number()),
+    ep: v.nullish(v.number()),
     airdate: v.string(),
     comment: v.number(),
     duration: v.string(),
@@ -832,7 +832,7 @@ export const getRelatedSubjectsByCharacterIdOutputSchema = toStandardJsonSchema(
         eps: v.string(),
         name: v.string(),
         name_cn: v.string(),
-        image: v.optional(v.string()),
+        image: v.nullish(v.string()),
       }),
     ),
   }),
@@ -868,7 +868,7 @@ export const getRelatedPersonsByCharacterIdOutputSchema = toStandardJsonSchema(
         subject_type: v.picklist([1, 2, 3, 4, 6]),
         subject_name: v.string(),
         subject_name_cn: v.string(),
-        staff: v.optional(v.string()),
+        staff: v.nullish(v.string()),
       }),
     ),
   }),
@@ -981,7 +981,7 @@ export const getRelatedSubjectsByPersonIdOutputSchema = toStandardJsonSchema(
         eps: v.string(),
         name: v.string(),
         name_cn: v.string(),
-        image: v.optional(v.string()),
+        image: v.nullish(v.string()),
       }),
     ),
   }),
@@ -1017,7 +1017,7 @@ export const getRelatedCharactersByPersonIdOutputSchema = toStandardJsonSchema(
         subject_type: v.picklist([1, 2, 3, 4, 6]),
         subject_name: v.string(),
         subject_name_cn: v.string(),
-        staff: v.optional(v.string()),
+        staff: v.nullish(v.string()),
       }),
     ),
   }),
@@ -1095,9 +1095,9 @@ export const getMeOutputSchema = toStandardJsonSchema(
     user_group: v.picklist([1, 2, 3, 4, 5, 8, 9, 10, 11]),
     avatar: v.object({ large: v.string(), medium: v.string(), small: v.string() }),
     sign: v.string(),
-    email: v.optional(v.string()),
-    reg_time: v.optional(v.string()),
-    time_offset: v.optional(v.number()),
+    email: v.nullish(v.string()),
+    reg_time: v.nullish(v.string()),
+    time_offset: v.nullish(v.number()),
   }),
 );
 
@@ -1149,13 +1149,13 @@ export const getUserCollectionsOutputSchema = toStandardJsonSchema(
         subject_type: v.picklist([1, 2, 3, 4, 6]),
         rate: v.number(),
         type: v.picklist([1, 2, 3, 4, 5]),
-        comment: v.optional(v.string()),
+        comment: v.nullish(v.string()),
         tags: v.array(v.string()),
         ep_status: v.number(),
         vol_status: v.number(),
         updated_at: v.string(),
         private: v.boolean(),
-        subject: v.optional(
+        subject: v.nullish(
           v.object({
             id: v.number(),
             type: v.picklist([1, 2, 3, 4, 6]),
@@ -1201,13 +1201,13 @@ export const getUserCollectionOutputSchema = toStandardJsonSchema(
     subject_type: v.picklist([1, 2, 3, 4, 6]),
     rate: v.number(),
     type: v.picklist([1, 2, 3, 4, 5]),
-    comment: v.optional(v.string()),
+    comment: v.nullish(v.string()),
     tags: v.array(v.string()),
     ep_status: v.number(),
     vol_status: v.number(),
     updated_at: v.string(),
     private: v.boolean(),
-    subject: v.optional(
+    subject: v.nullish(
       v.object({
         id: v.number(),
         type: v.picklist([1, 2, 3, 4, 6]),
@@ -1370,7 +1370,7 @@ export const getUserSubjectEpisodeCollectionOutputSchema = toStandardJsonSchema(
     total: v.number(),
     limit: v.number(),
     offset: v.number(),
-    data: v.optional(
+    data: v.nullish(
       v.array(
         v.object({
           episode: v.object({
@@ -1379,13 +1379,13 @@ export const getUserSubjectEpisodeCollectionOutputSchema = toStandardJsonSchema(
             name: v.string(),
             name_cn: v.string(),
             sort: v.number(),
-            ep: v.optional(v.number()),
+            ep: v.nullish(v.number()),
             airdate: v.string(),
             comment: v.number(),
             duration: v.string(),
             desc: v.string(),
             disc: v.number(),
-            duration_seconds: v.optional(v.number()),
+            duration_seconds: v.nullish(v.number()),
           }),
           type: v.picklist([0, 1, 2, 3]),
           updated_at: v.number(),
@@ -1429,13 +1429,13 @@ export const getUserEpisodeCollectionOutputSchema = toStandardJsonSchema(
       name: v.string(),
       name_cn: v.string(),
       sort: v.number(),
-      ep: v.optional(v.number()),
+      ep: v.nullish(v.number()),
       airdate: v.string(),
       comment: v.number(),
       duration: v.string(),
       desc: v.string(),
       disc: v.number(),
-      duration_seconds: v.optional(v.number()),
+      duration_seconds: v.nullish(v.number()),
     }),
     type: v.picklist([0, 1, 2, 3]),
     updated_at: v.number(),
@@ -1626,7 +1626,7 @@ export const getPersonRevisionsOutputSchema = toStandardJsonSchema(
       v.object({
         id: v.number(),
         type: v.number(),
-        creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+        creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
         summary: v.string(),
         created_at: v.string(),
       }),
@@ -1649,10 +1649,10 @@ export const getPersonRevisionByIdOutputSchema = toStandardJsonSchema(
   v.object({
     id: v.number(),
     type: v.number(),
-    creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+    creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
     summary: v.string(),
     created_at: v.string(),
-    data: v.optional(
+    data: v.nullish(
       v.record(
         v.string(),
         v.object({
@@ -1660,15 +1660,15 @@ export const getPersonRevisionByIdOutputSchema = toStandardJsonSchema(
           prsn_summary: v.string(),
           prsn_name: v.string(),
           profession: v.object({
-            producer: v.optional(v.string()),
-            mangaka: v.optional(v.string()),
-            artist: v.optional(v.string()),
-            seiyu: v.optional(v.string()),
-            writer: v.optional(v.string()),
-            illustrator: v.optional(v.string()),
-            actor: v.optional(v.string()),
+            producer: v.nullish(v.string()),
+            mangaka: v.nullish(v.string()),
+            artist: v.nullish(v.string()),
+            seiyu: v.nullish(v.string()),
+            writer: v.nullish(v.string()),
+            illustrator: v.nullish(v.string()),
+            actor: v.nullish(v.string()),
           }),
-          extra: v.object({ img: v.optional(v.string()) }),
+          extra: v.object({ img: v.nullish(v.string()) }),
         }),
       ),
     ),
@@ -1707,7 +1707,7 @@ export const getCharacterRevisionsOutputSchema = toStandardJsonSchema(
       v.object({
         id: v.number(),
         type: v.number(),
-        creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+        creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
         summary: v.string(),
         created_at: v.string(),
       }),
@@ -1730,17 +1730,17 @@ export const getCharacterRevisionByIdOutputSchema = toStandardJsonSchema(
   v.object({
     id: v.number(),
     type: v.number(),
-    creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+    creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
     summary: v.string(),
     created_at: v.string(),
-    data: v.optional(
+    data: v.nullish(
       v.record(
         v.string(),
         v.object({
           infobox: v.string(),
           summary: v.string(),
           name: v.string(),
-          extra: v.object({ img: v.optional(v.string()) }),
+          extra: v.object({ img: v.nullish(v.string()) }),
         }),
       ),
     ),
@@ -1774,7 +1774,7 @@ export const getSubjectRevisionsOutputSchema = toStandardJsonSchema(
       v.object({
         id: v.number(),
         type: v.number(),
-        creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+        creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
         summary: v.string(),
         created_at: v.string(),
       }),
@@ -1797,10 +1797,10 @@ export const getSubjectRevisionByIdOutputSchema = toStandardJsonSchema(
   v.object({
     id: v.number(),
     type: v.number(),
-    creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+    creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
     summary: v.string(),
     created_at: v.string(),
-    data: v.optional(
+    data: v.nullish(
       v.object({
         field_eps: v.number(),
         field_infobox: v.string(),
@@ -1844,7 +1844,7 @@ export const getEpisodeRevisionsOutputSchema = toStandardJsonSchema(
       v.object({
         id: v.number(),
         type: v.number(),
-        creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+        creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
         summary: v.string(),
         created_at: v.string(),
       }),
@@ -1867,10 +1867,10 @@ export const getEpisodeRevisionByIdOutputSchema = toStandardJsonSchema(
   v.object({
     id: v.number(),
     type: v.number(),
-    creator: v.optional(v.object({ username: v.string(), nickname: v.string() })),
+    creator: v.nullish(v.object({ username: v.string(), nickname: v.string() })),
     summary: v.string(),
     created_at: v.string(),
-    data: v.optional(
+    data: v.nullish(
       v.pipe(
         v.record(v.string(), v.unknown()),
         v.description("Revision content changes (dynamic schema)"),
